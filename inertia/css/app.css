@@ -1,0 +1,64 @@
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-card: #161616;
+  --bg-hover: #1c1c1c;
+  --border: #2a2a2a;
+  --text-primary: #f5f5f5;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+  --accent: #1a6b3c;
+  --accent-hover: #1f8049;
+  --accent-soft: rgba(26, 107, 60, 0.12);
+  --danger: #e53e3e;
+  --warning: #d97706;
+  --success: #059669;
+  --info: #2563eb;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  min-height: 100vh;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.font-mono {
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

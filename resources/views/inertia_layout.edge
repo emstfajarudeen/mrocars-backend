@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrfToken }}">
+
+  <title inertia>MROCars Admin</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'sans-serif'],
+            mono: ['IBM Plex Mono', 'monospace'],
+          },
+          colors: {
+            bg: { primary: '#0A0A0A', secondary: '#111111', card: '#161616', hover: '#1C1C1C' },
+            border: { DEFAULT: '#2A2A2A' },
+            text: { primary: '#F5F5F5', secondary: '#888888', muted: '#555555' },
+            accent: { DEFAULT: '#1A6B3C', hover: '#1F8049', soft: 'rgba(26,107,60,0.12)' },
+            danger: '#E53E3E',
+            warning: '#D97706',
+            success: '#059669',
+            info: '#2563EB',
+          },
+        },
+      },
+    }
+  </script>
+
+  @stack('dumper')
+  @viteReactRefresh()
+  @inertiaHead()
+  @vite(['inertia/app/app.tsx', `inertia/pages/${page.component}.tsx`])
+</head>
+
+<body class="min-h-screen bg-bg-primary text-text-primary font-sans antialiased">
+  @inertia()
+</body>
+
+</html>
