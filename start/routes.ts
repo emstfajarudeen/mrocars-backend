@@ -14,4 +14,4 @@ import '#start/routes/business'
 import '#start/routes/admin'
 import '#start/routes/admin_web'
 
-router.on('/').renderInertia('home')
+router.get('/', ({ response }) => response.redirect('/admin'))

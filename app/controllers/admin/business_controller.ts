@@ -1,6 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
-import hash from '@adonisjs/core/services/hash'
 import BusinessProfile from '#models/business_profile'
 import Order from '#models/order'
 import RequestResponse from '#models/request_response'
@@ -226,7 +225,7 @@ export default class BusinessController {
             email: payload.email,
             phoneCode: payload.phone_code,
             phoneNumber: payload.phone_number,
-            password: await hash.make(payload.password),
+            password: payload.password,
             role: 'business',
             language: 'en',
             isActive: true,

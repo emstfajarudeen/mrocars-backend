@@ -1,5 +1,4 @@
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
-import hash from '@adonisjs/core/services/hash'
 import Category from '#models/category'
 import User from '#models/user'
 
@@ -16,7 +15,7 @@ export default class InitialDataSeeder extends BaseSeeder {
       { email: 'admin@mrocars.com' },
       {
         name: 'Admin',
-        password: await hash.make('Admin@123'),
+        password: 'Admin@123',
         role: 'admin',
         isActive: true,
       }

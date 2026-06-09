@@ -93,7 +93,7 @@ export default class ProfileController {
         return ApiResponse.error(response, 'Invalid password', undefined, 401)
       }
 
-      user.password = await hash.make(payload.new_password)
+      user.password = payload.new_password
       await user.save()
 
       return ApiResponse.success(

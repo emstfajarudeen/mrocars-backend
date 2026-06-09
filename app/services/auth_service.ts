@@ -1,6 +1,5 @@
 import { randomInt } from 'node:crypto'
 import { DateTime } from 'luxon'
-import hash from '@adonisjs/core/services/hash'
 import mail from '@adonisjs/mail/services/main'
 import type { HttpContext } from '@adonisjs/core/http'
 import env from '#start/env'
@@ -100,7 +99,7 @@ export default class AuthService {
       return null
     }
 
-    user.password = await hash.make(password)
+    user.password = password
     await user.save()
     await resetToken.delete()
 

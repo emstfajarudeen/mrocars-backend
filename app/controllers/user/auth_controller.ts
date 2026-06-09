@@ -42,7 +42,7 @@ export default class AuthController {
         email: payload.email,
         phoneCode: payload.phone_code,
         phoneNumber: payload.phone_number,
-        password: await hash.make(payload.password),
+        password: payload.password,
         role: 'user',
         language: payload.language ?? 'en',
         isActive: true,
