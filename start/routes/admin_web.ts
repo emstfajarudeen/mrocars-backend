@@ -18,6 +18,7 @@ router
 router
   .group(() => {
     router.get('/dashboard', '#controllers/admin/inertia/dashboard_controller.index')
+    router.get('/banners', '#controllers/admin/inertia/banner_controller.index')
 
     router.get('/categories', '#controllers/admin/inertia/masters_controller.categories')
     router.get('/car-brands', '#controllers/admin/inertia/masters_controller.carBrands')

@@ -1,15 +1,15 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 
-export default class Category extends BaseModel {
+export default class Banner extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
   @column()
-  declare nameEn: string
+  declare titleEn: string
 
   @column()
-  declare nameAr: string
+  declare titleAr: string
 
   @column()
   declare descriptionEn: string | null
@@ -18,7 +18,7 @@ export default class Category extends BaseModel {
   declare descriptionAr: string | null
 
   @column()
-  declare image: string | null
+  declare image: string
 
   @column()
   declare isActive: boolean

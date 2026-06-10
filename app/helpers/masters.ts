@@ -1,8 +1,10 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { SimplePaginatorContract } from '@adonisjs/lucid/types/querybuilder'
 import { publicUrl } from '#helpers/upload'
+import type Banner from '#models/banner'
 import type CarBrand from '#models/car_brand'
 import type Category from '#models/category'
+import type { UserLanguage } from '#types/user'
 
 export function isValidationError(error: unknown): boolean {
   return (
@@ -78,5 +80,30 @@ export function serializeCategory(category: Category) {
   return {
     ...category.serialize(),
     image_url: publicUrl(category.image),
+  }
+}
+
+export function serializeLocalizedCategory(category: Category, language: UserLanguage) {
+  return {
+    id: category.id,
+    name: language === 'ar' ? category.nameAr : category.nameEn,
+    description: language === 'ar' ? category.descriptionAr : category.descriptionEn,
+    image_url: publicUrl(category.image),
+  }
+}
+
+export function serializeBanner(banner: Banner) {
+  return {
+    ...banner.serialize(),
+    image_url: publicUrl(banner.image),
+  }
+}
+
+export function serializeLocalizedBanner(banner: Banner, language: UserLanguage) {
+  return {
+    id: banner.id,
+    title: language === 'ar' ? banner.titleAr : banner.titleEn,
+    description: language === 'ar' ? banner.descriptionAr : banner.descriptionEn,
+    image_url: publicUrl(banner.image),
   }
 }

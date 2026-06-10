@@ -4,6 +4,7 @@ import {
   Car,
   FileText,
   Grid,
+  Images,
   LayoutDashboard,
   LogOut,
   Map,
@@ -32,6 +33,7 @@ const navGroups = [
   {
     label: 'Catalog',
     items: [
+      { label: 'Banners', href: '/admin/banners', icon: Images },
       { label: 'Categories', href: '/admin/categories', icon: Grid },
       { label: 'Car Brands', href: '/admin/car-brands', icon: Car },
       { label: 'Car Models', href: '/admin/car-models', icon: Settings },

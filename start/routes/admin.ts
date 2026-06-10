@@ -14,6 +14,19 @@ router
 
     router
       .group(() => {
+        router.get('/', '#controllers/admin/banner_controller.index')
+        router.post('/', '#controllers/admin/banner_controller.store')
+        router.put('/reorder', '#controllers/admin/banner_controller.reorder')
+        router.get('/:id', '#controllers/admin/banner_controller.show')
+        router.put('/:id', '#controllers/admin/banner_controller.update')
+        router.delete('/:id', '#controllers/admin/banner_controller.destroy')
+        router.put('/:id/toggle-status', '#controllers/admin/banner_controller.toggleStatus')
+      })
+      .prefix('/banners')
+      .use([middleware.auth({ guards: ['web', 'jwt'] }), middleware.role({ role: 'admin' })])
+
+    router
+      .group(() => {
         router.get('/governorates', '#controllers/admin/governorate_controller.index')
         router.post('/governorates', '#controllers/admin/governorate_controller.store')
         router.get('/governorates/:id', '#controllers/admin/governorate_controller.show')

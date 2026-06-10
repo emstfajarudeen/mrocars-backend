@@ -30,6 +30,8 @@ router
 
     router
       .group(() => {
+        router.get('/home', '#controllers/user/home_controller.index')
+
         router
           .group(() => {
             router.get('/', '#controllers/user/profile_controller.show')

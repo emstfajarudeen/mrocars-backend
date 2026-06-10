@@ -27,6 +27,10 @@ router
       .prefix('/masters')
 
     router
+      .get('/home', '#controllers/business/home_controller.index')
+      .use([middleware.auth(), middleware.role({ role: 'business' })])
+
+    router
       .group(() => {
         router.get('/', '#controllers/business/profile_controller.show')
         router.put('/update', '#controllers/business/profile_controller.update')

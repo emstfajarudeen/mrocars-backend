@@ -19,6 +19,8 @@ type Category = {
   id: number
   nameEn: string
   nameAr: string
+  descriptionEn: string | null
+  descriptionAr: string | null
   sortOrder: number
   isActive: boolean
   image_url: string | null
@@ -35,13 +37,27 @@ export default function Categories({ categories, meta, filters }: Props) {
   const [open, setOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [editing, setEditing] = useState<Category | null>(null)
-  const [form, setForm] = useState({ name_en: '', name_ar: '', sort_order: '0', is_active: true })
+  const [form, setForm] = useState({
+    name_en: '',
+    name_ar: '',
+    description_en: '',
+    description_ar: '',
+    sort_order: '0',
+    is_active: true,
+  })
   const [image, setImage] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
 
   const openCreate = () => {
     setEditing(null)
-    setForm({ name_en: '', name_ar: '', sort_order: '0', is_active: true })
+    setForm({
+      name_en: '',
+      name_ar: '',
+      description_en: '',
+      description_ar: '',
+      sort_order: '0',
+      is_active: true,
+    })
     setImage(null)
     setOpen(true)
   }
@@ -51,6 +67,8 @@ export default function Categories({ categories, meta, filters }: Props) {
     setForm({
       name_en: cat.nameEn,
       name_ar: cat.nameAr,
+      description_en: cat.descriptionEn ?? '',
+      description_ar: cat.descriptionAr ?? '',
       sort_order: String(cat.sortOrder),
       is_active: cat.isActive,
     })
@@ -64,6 +82,8 @@ export default function Categories({ categories, meta, filters }: Props) {
       const fd = new FormData()
       fd.append('name_en', form.name_en)
       fd.append('name_ar', form.name_ar)
+      fd.append('description_en', form.description_en)
+      fd.append('description_ar', form.description_ar)
       fd.append('sort_order', form.sort_order)
       fd.append('is_active', String(form.is_active))
       if (image) fd.append('image', image)
@@ -122,6 +142,7 @@ export default function Categories({ categories, meta, filters }: Props) {
           { key: 'image', label: 'Image', render: (r) => r.image_url ? <img src={r.image_url} alt="" className="h-10 w-10 rounded object-cover" /> : '—' },
           { key: 'nameEn', label: 'Name (EN)' },
           { key: 'nameAr', label: 'Name (AR)' },
+          { key: 'descriptionEn', label: 'Description (EN)', render: (r) => <span className="line-clamp-2 text-text-secondary">{r.descriptionEn ?? '—'}</span> },
           { key: 'sortOrder', label: 'Order', render: (r) => <span className="font-mono">{r.sortOrder}</span> },
           { key: 'isActive', label: 'Status', render: (r) => <Badge variant={statusToBadge(r.isActive ? 'active' : 'inactive')}>{formatStatusLabel(r.isActive ? 'active' : 'inactive')}</Badge> },
           {
@@ -144,6 +165,8 @@ export default function Categories({ categories, meta, filters }: Props) {
         <div className="space-y-4">
           <Input label="Name (EN)" value={form.name_en} onChange={(e) => setForm({ ...form, name_en: e.target.value })} />
           <Input label="Name (AR)" value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} />
+          <Input label="Description (EN)" value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} />
+          <Input label="Description (AR)" value={form.description_ar} onChange={(e) => setForm({ ...form, description_ar: e.target.value })} />
           <Input label="Sort Order" type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
           <Input label="Image" type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
           <label className="flex items-center gap-2 text-sm">

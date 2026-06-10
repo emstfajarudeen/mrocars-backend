@@ -36,6 +36,8 @@ export const categoryValidator = vine.compile(
   vine.object({
     name_en: vine.string(),
     name_ar: vine.string(),
+    description_en: vine.string().optional(),
+    description_ar: vine.string().optional(),
     sort_order: vine.number().optional(),
     is_active: vine.boolean().optional(),
   })
