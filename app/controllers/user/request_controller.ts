@@ -238,9 +238,12 @@ export default class RequestController {
     }
   }
 
-  async show({ auth, params, response }: HttpContext) {
+  async show({ auth, request, params, response }: HttpContext) {
     try {
       const user = auth.getUserOrFail()
+      const governorateId = request.input('governorate_id')
+      const areaId = request.input('area_id')
+
       const serviceRequest = await Request.query()
         .where('id', params.id)
         .where('userId', user.id)
@@ -255,6 +258,20 @@ export default class RequestController {
             .preload('businessUser', (businessQuery) => {
               businessQuery.preload('businessProfile')
             })
+
+          if (governorateId || areaId) {
+            responsesQuery.whereExists((query) => {
+              query
+                .from('business_profiles')
+                .whereRaw('business_profiles.user_id = request_responses.business_user_id')
+              if (governorateId) {
+                query.where('business_profiles.governorate_id', governorateId)
+              }
+              if (areaId) {
+                query.where('business_profiles.area_id', areaId)
+              }
+            })
+          }
         })
         .first()
 
@@ -318,7 +335,7 @@ export default class RequestController {
     }
   }
 
-  async responses({ auth, params, response }: HttpContext) {
+  async responses({ auth, request, params, response }: HttpContext) {
     try {
       const user = auth.getUserOrFail()
       const serviceRequest = await findOwnedRequest(user.id, Number(params.requestId))
@@ -327,13 +344,32 @@ export default class RequestController {
         return ApiResponse.error(response, 'Request not found', undefined, 404)
       }
 
-      const responses = await applyRealOffersFilter(
+      const governorateId = request.input('governorate_id')
+      const areaId = request.input('area_id')
+
+      const responsesQuery = applyRealOffersFilter(
         RequestResponse.query().where('requestId', serviceRequest.id)
       )
         .orderBy('createdAt', 'asc')
         .preload('businessUser', (businessQuery) => {
           businessQuery.preload('businessProfile')
         })
+
+      if (governorateId || areaId) {
+        responsesQuery.whereExists((query) => {
+          query
+            .from('business_profiles')
+            .whereRaw('business_profiles.user_id = request_responses.business_user_id')
+          if (governorateId) {
+            query.where('business_profiles.governorate_id', governorateId)
+          }
+          if (areaId) {
+            query.where('business_profiles.area_id', areaId)
+          }
+        })
+      }
+
+      const responses = await responsesQuery
 
       const data = await Promise.all(
         responses.map((item) => enrichResponseWithRating(item, true))

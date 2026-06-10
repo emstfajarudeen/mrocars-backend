@@ -157,7 +157,7 @@ export default class HomeController {
       ])
 
       const requestStatusCounts = buildStatusCounts(
-        requestStatusRows as { status: string; count: number | string }[],
+        requestStatusRows as any as { status: string; count: number | string }[],
         REQUEST_STATUSES
       )
       const orderStatusCounts = buildStatusCounts(

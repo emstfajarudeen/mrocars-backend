@@ -86,56 +86,37 @@ export default class ProfileController {
       if (payload.phone_code !== undefined) profile.phoneCode = payload.phone_code
       if (payload.phone_number !== undefined) profile.phoneNumber = payload.phone_number
 
+      const avatar = request.file('avatar', {
+        size: '2mb',
+        extnames: ['jpg', 'jpeg', 'png', 'webp'],
+      })
+      if (avatar) {
+        const fileErrors = validateImageFile(avatar, 'avatar')
+        if (fileErrors) {
+          return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+        }
+        await deleteFileIfExists(profile.avatar)
+        const path = await storeFile(avatar, `business/avatars/${user.id}`)
+        profile.avatar = path
+      }
+
       await profile.save()
       await profile.load('governorate')
       await profile.load('area')
+
+      const profileData = {
+        ...profile.serialize(),
+        avatar_url: publicUrl(profile.avatar),
+      }
 
       return ApiResponse.success(
         response,
         {
           user: user.serialize(),
-          business_profile: profile.serialize(),
+          business_profile: profileData,
           message: 'Profile updated',
         },
         'Profile updated'
-      )
-    } catch (error) {
-      if (isValidationError(error)) throw error
-      return ApiResponse.error(response, 'Something went wrong', undefined, 500)
-    }
-  }
-
-  async updateAvatar({ auth, request, response }: HttpContext) {
-    try {
-      const user = auth.getUserOrFail() as User
-      const profile = await BusinessProfile.query().where('userId', user.id).first()
-
-      if (!profile) {
-        return ApiResponse.error(response, 'Business profile not found', undefined, 404)
-      }
-
-      const avatar = request.file('avatar', {
-        size: '2mb',
-        extnames: ['jpg', 'jpeg', 'png', 'webp'],
-      })
-
-      const fileErrors = validateImageFile(avatar, 'avatar')
-      if (fileErrors) {
-        return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
-      }
-
-      await deleteFileIfExists(profile.avatar)
-      const path = await storeFile(avatar!, `business/avatars/${user.id}`)
-      profile.avatar = path
-      await profile.save()
-
-      return ApiResponse.success(
-        response,
-        {
-          avatar_url: publicUrl(path)!,
-          message: 'Avatar updated successfully',
-        },
-        'Avatar updated successfully'
       )
     } catch (error) {
       if (isValidationError(error)) throw error

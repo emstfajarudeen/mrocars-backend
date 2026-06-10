@@ -29,8 +29,19 @@ export default class UserVehicle extends compose(BaseModel, SoftDeletes) {
   @column()
   declare vinNumber: string | null
 
-  @column()
-  declare photo: string | null
+  @column({
+    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
+    consume: (value: string | null | string[]) => {
+      if (!value) return []
+      if (Array.isArray(value)) return value
+      try {
+        return typeof value === 'string' ? JSON.parse(value) : value
+      } catch {
+        return [value]
+      }
+    },
+  })
+  declare photos: string[] | null
 
   @column()
   declare isDefault: boolean

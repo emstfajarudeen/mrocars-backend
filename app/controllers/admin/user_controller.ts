@@ -80,7 +80,7 @@ export default class UserController {
 
     const vehicles = user.vehicles.map((vehicle) => ({
       ...vehicle.serialize(),
-      photo_url: publicUrl(vehicle.photo),
+      photo_url: vehicle.photos && vehicle.photos.length > 0 ? publicUrl(vehicle.photos[0]) : null,
       car_brand: vehicle.carBrand?.serialize() ?? null,
       car_model: vehicle.carModel?.serialize() ?? null,
     }))

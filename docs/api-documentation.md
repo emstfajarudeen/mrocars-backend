@@ -356,7 +356,7 @@ Key errors: `401 Unauthorized`.
 
 `PUT {BASE_URL}/api/v1/user/profile/update`
 
-Description: Updates basic profile fields.
+Description: Updates profile fields, including optional email change and avatar upload. Use `multipart/form-data` if uploading an avatar.
 
 Auth: JWT required, role `user`.
 
@@ -365,27 +365,24 @@ Body:
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `name` | string | no | |
+| `email` | string | no | Must be unique |
 | `phone_code` | string | no | |
 | `phone_number` | string | no | |
 | `language` | enum | no | `en`, `ar` |
+| `avatar` | file | no | `jpg`, `jpeg`, `png`, `webp`; max `2mb` |
 
-Response: `data.user`, `data.message`.
+Response: `data.user` (including `avatar_url`), `data.message`.
 
 Key errors: `422 Validation failed`, `500`.
 
-### Update Avatar
+### [DEPRECATED] Update Avatar
 
 `POST {BASE_URL}/api/v1/user/profile/avatar`
 
-Description: Uploads/replaces user avatar.
+> [!WARNING]
+> This endpoint is deprecated and has been removed. Use the `PUT /api/v1/user/profile/update` endpoint to upload avatars instead.
 
-Auth: JWT required, role `user`.
-
-Body: multipart `avatar` file required.
-
-Response: `data.avatar_url`, `data.message`.
-
-Key errors: `422 Validation failed`, `500`.
+Key errors: `404 Not Found`.
 
 ### Change Password
 
@@ -433,11 +430,11 @@ Key errors: `401 Unauthorized`.
 
 `GET {BASE_URL}/api/v1/user/vehicles`
 
-Description: Fetches the user's saved vehicles.
+Description: Fetches the user's saved vehicles, showing the year, brand, model details, and multiple photos.
 
 Auth: JWT required, role `user`.
 
-Response: `data.vehicles[]` with `car_brand`, `car_model`, and `photo_url` when available.
+Response: `data.vehicles[]` with `year`, `car_brand`, `car_model`, `photo_url` (main/first photo), and `photo_urls` (array of all photos) when available.
 
 Key errors: `401 Unauthorized`.
 
@@ -445,20 +442,21 @@ Key errors: `401 Unauthorized`.
 
 `POST {BASE_URL}/api/v1/user/vehicles`
 
-Description: Adds a vehicle. The first vehicle becomes default automatically.
+Description: Adds a vehicle. The first vehicle becomes default automatically. Handles multiple photos.
 
 Auth: JWT required, role `user`.
 
 Body:
 
-| Field | Type | Required |
-| --- | --- | --- |
-| `car_brand_id` | number | yes |
-| `car_model_id` | number | yes |
-| `year` | string | yes |
-| `registration_number` | string | no |
-| `vin_number` | string | no |
-| `photo` | file | no |
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `car_brand_id` | number | yes | |
+| `car_model_id` | number | yes | |
+| `year` | string | yes | |
+| `registration_number` | string | no | |
+| `vin_number` | string | no | |
+| `photos` | file[] | no | Multiple vehicle photos |
+| `photo` | file | no | Single vehicle photo (backward compatibility) |
 
 Response: `data.vehicle`, `data.message`.
 
@@ -474,7 +472,7 @@ Auth: JWT required, role `user`.
 
 Params: `id` number required.
 
-Response: `data.vehicle`.
+Response: `data.vehicle` (includes `year`, `photo_urls`, etc.).
 
 Key errors: `404 Vehicle not found`, `401 Unauthorized`.
 
@@ -482,7 +480,7 @@ Key errors: `404 Vehicle not found`, `401 Unauthorized`.
 
 `PUT {BASE_URL}/api/v1/user/vehicles/:id`
 
-Description: Updates a saved vehicle and optional photo.
+Description: Updates a saved vehicle and optional photos.
 
 Auth: JWT required, role `user`.
 
@@ -677,7 +675,11 @@ Description: Opens request detail with attachments and business offers.
 
 Auth: JWT required, role `user`.
 
-Response: `data.request`, including `responses[]`.
+Query:
+- `governorate_id` (number, optional) - Filter responses by governorate
+- `area_id` (number, optional) - Filter responses by area
+
+Response: `data.request`, including `responses[]` (filtered if query params are provided).
 
 Key errors: `404 Request not found`, `401 Unauthorized`.
 
@@ -701,7 +703,11 @@ Description: Lists business offers for a request. Rejection markers and zero-pri
 
 Auth: JWT required, role `user`.
 
-Response: `data.responses[]`.
+Query:
+- `governorate_id` (number, optional) - Filter responses by governorate
+- `area_id` (number, optional) - Filter responses by area
+
+Response: `data.responses[]` (filtered if query params are provided).
 
 Key errors: `404 Request not found`, `401 Unauthorized`.
 
@@ -1048,37 +1054,33 @@ Key errors: `401 Unauthorized`.
 
 `PUT {BASE_URL}/api/v1/business/profile/update`
 
-Description: Updates account name and business contact details.
+Description: Updates account name, business contact details, and optional avatar/logo. Use `multipart/form-data` if uploading an avatar.
 
 Auth: JWT required, role `business`.
 
 Body:
 
-| Field | Type | Required |
-| --- | --- | --- |
-| `name` | string | no |
-| `business_name` | string | no |
-| `email` | string | no |
-| `phone_code` | string | no |
-| `phone_number` | string | no |
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `name` | string | no | Account owner's name |
+| `business_name` | string | no | |
+| `email` | string | no | |
+| `phone_code` | string | no | |
+| `phone_number` | string | no | |
+| `avatar` | file | no | `jpg`, `jpeg`, `png`, `webp`; max `2mb` |
 
-Response: `data.user`, `data.business_profile`, `data.message`.
+Response: `data.user`, `data.business_profile` (including `avatar_url`), `data.message`.
 
 Key errors: `422 Validation failed`, `500`.
 
-### Update Avatar
+### [DEPRECATED] Update Avatar
 
 `POST {BASE_URL}/api/v1/business/profile/avatar`
 
-Description: Uploads/replaces business avatar/logo.
+> [!WARNING]
+> This endpoint is deprecated and has been removed. Use the `PUT /api/v1/business/profile/update` endpoint to upload avatars/logos instead.
 
-Auth: JWT required, role `business`.
-
-Body: multipart `avatar` file required.
-
-Response: `data.avatar_url`, `data.message`.
-
-Key errors: `404 Business profile not found`, `422 Validation failed`, `500`.
+Key errors: `404 Not Found`, `422 Validation failed`, `500`.
 
 ### Update Address
 
@@ -1265,15 +1267,19 @@ Key errors: `404 Request not found`, `422 You have already responded to this req
 
 `GET {BASE_URL}/api/v1/business/orders`
 
-Description: Shows orders assigned to the business.
+Description: Shows orders assigned to the business. Supports filtering by status and category.
 
 Auth: JWT required, role `business`.
 
-Query: `page`, `limit`, optional `status` (`new`, `pending`, `delivered`, `cancelled`).
+Query:
+- `page` (number, optional) - Page number for pagination
+- `limit` (number, optional) - Items per page
+- `status` (string, optional) - Filter by status (`new`, `pending`, `delivered`, `cancelled`)
+- `category_id` (number/string, optional) - Filter by request category ID or category slug
 
 Response: paginated `data.data[]` order list with customer phone details.
 
-Key errors: `401 Unauthorized`.
+Key errors: `401 Unauthorized`, `404 Category not found`.
 
 ### Get Order Detail
 

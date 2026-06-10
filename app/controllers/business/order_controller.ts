@@ -12,6 +12,7 @@ import {
   serializeOrder,
   serializeOrderAdditionalWork,
   serializeUserWithPhone,
+  resolveCategoryId,
 } from '#helpers/request_helper'
 import { deleteFileIfExists, storeFile, validateFile } from '#helpers/upload'
 import {
@@ -70,12 +71,24 @@ export default class OrderController {
       const { page, limit } = getPaginationParams(request)
       const status = request.input('status') as string | undefined
 
+      const categoryInput = request.input('category_id') as string | number | undefined
+
       const query = Order.query()
         .where('businessUserId', business.id)
         .orderBy('createdAt', 'desc')
 
       if (status) {
         query.where('status', status)
+      }
+
+      const categoryId = await resolveCategoryId(categoryInput)
+      if (categoryInput !== undefined && categoryId === null) {
+        return ApiResponse.error(response, 'Category not found', undefined, 404)
+      }
+      if (categoryId) {
+        query.whereHas('request', (requestQuery) => {
+          requestQuery.where('categoryId', categoryId)
+        })
       }
 
       const paginated = await query

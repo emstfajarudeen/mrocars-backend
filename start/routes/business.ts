@@ -34,7 +34,6 @@ router
       .group(() => {
         router.get('/', '#controllers/business/profile_controller.show')
         router.put('/update', '#controllers/business/profile_controller.update')
-        router.post('/avatar', '#controllers/business/profile_controller.updateAvatar')
         router.put('/address', '#controllers/business/profile_controller.updateAddress')
         router.put('/bank-details', '#controllers/business/profile_controller.updateBankDetails')
         router.put('/change-password', '#controllers/business/profile_controller.changePassword')

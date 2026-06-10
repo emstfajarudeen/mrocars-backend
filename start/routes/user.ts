@@ -36,7 +36,6 @@ router
           .group(() => {
             router.get('/', '#controllers/user/profile_controller.show')
             router.put('/update', '#controllers/user/profile_controller.update')
-            router.post('/avatar', '#controllers/user/profile_controller.updateAvatar')
             router.put('/change-password', '#controllers/user/profile_controller.changePassword')
             router.put('/language', '#controllers/user/profile_controller.updateLanguage')
             router.delete('/delete-account', '#controllers/user/profile_controller.deleteAccount')

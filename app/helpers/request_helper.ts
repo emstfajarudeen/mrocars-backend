@@ -126,9 +126,11 @@ export function serializeUserVehicle(vehicle: UserVehicle | null) {
   }
 
   const data = vehicle.serialize()
+  const photoUrls = (vehicle.photos || []).map((p) => publicUrl(p)).filter(Boolean)
   return {
     ...data,
-    photo_url: publicUrl(vehicle.photo),
+    photo_url: photoUrls.length > 0 ? photoUrls[0] : null,
+    photo_urls: photoUrls,
     car_brand: vehicle.carBrand ? serializeCarBrand(vehicle.carBrand) : null,
     car_model: vehicle.carModel ? vehicle.carModel.serialize() : null,
   }

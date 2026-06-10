@@ -3,6 +3,7 @@ import vine from '@vinejs/vine'
 export const updateProfileValidator = vine.compile(
   vine.object({
     name: vine.string().trim().optional(),
+    email: vine.string().email().normalizeEmail().optional(),
     phone_code: vine.string().optional(),
     phone_number: vine.string().optional(),
     language: vine.enum(['en', 'ar']).optional(),

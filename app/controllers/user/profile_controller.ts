@@ -39,44 +39,47 @@ export default class ProfileController {
       if (payload.phone_number !== undefined) user.phoneNumber = payload.phone_number
       if (payload.language !== undefined) user.language = payload.language
 
-      await user.save()
+      if (payload.email !== undefined && payload.email !== user.email) {
+        const existing = await User.query()
+          .where('email', payload.email)
+          .whereNot('id', user.id)
+          .first()
+        if (existing) {
+          return ApiResponse.error(
+            response,
+            'Email already registered',
+            { email: ['Email already registered'] },
+            422
+          )
+        }
+        user.email = payload.email
+      }
 
-      return ApiResponse.success(
-        response,
-        { user: user.serialize(), message: 'Profile updated successfully' },
-        'Profile updated successfully'
-      )
-    } catch (error) {
-      if (isValidationError(error)) throw error
-      return ApiResponse.error(response, 'Something went wrong', undefined, 500)
-    }
-  }
-
-  async updateAvatar({ auth, request, response }: HttpContext) {
-    try {
-      const user = auth.getUserOrFail() as User
       const avatar = request.file('avatar', {
         size: '2mb',
         extnames: ['jpg', 'jpeg', 'png', 'webp'],
       })
-
-      const fileErrors = validateImageFile(avatar, 'avatar')
-      if (fileErrors) {
-        return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+      if (avatar) {
+        const fileErrors = validateImageFile(avatar, 'avatar')
+        if (fileErrors) {
+          return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+        }
+        await deleteFileIfExists(user.avatar)
+        const path = await storeFile(avatar, `avatars/${user.id}`)
+        user.avatar = path
       }
 
-      await deleteFileIfExists(user.avatar)
-      const path = await storeFile(avatar!, `avatars/${user.id}`)
-      user.avatar = path
       await user.save()
+
+      const userData = {
+        ...user.serialize(),
+        avatar_url: publicUrl(user.avatar),
+      }
 
       return ApiResponse.success(
         response,
-        {
-          avatar_url: publicUrl(path)!,
-          message: 'Avatar updated successfully',
-        },
-        'Avatar updated successfully'
+        { user: userData, message: 'Profile updated successfully' },
+        'Profile updated successfully'
       )
     } catch (error) {
       if (isValidationError(error)) throw error

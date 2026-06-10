@@ -3,6 +3,7 @@ import UserVehicle from '#models/user_vehicle'
 import { ApiResponse } from '#helpers/response'
 import { deleteFileIfExists, storeFile, validateImageFile } from '#helpers/upload'
 import { createVehicleValidator, updateVehicleValidator } from '#validators/user/vehicle_validator'
+import { serializeUserVehicle } from '#helpers/request_helper'
 
 function isValidationError(error: unknown): boolean {
   return (
@@ -35,7 +36,7 @@ export default class VehicleController {
         .preload('carModel')
 
       return ApiResponse.success(response, {
-        vehicles: vehicles.map((vehicle) => vehicle.serialize()),
+        vehicles: vehicles.map((vehicle) => serializeUserVehicle(vehicle)),
       })
     } catch {
       return ApiResponse.error(response, 'Unauthorized', undefined, 401)
@@ -50,17 +51,38 @@ export default class VehicleController {
       const existingCount = await UserVehicle.query().where('userId', user.id).count('* as total')
       const isFirst = Number(existingCount[0].$extras.total) === 0
 
-      let photoPath: string | null = null
+      const uploadedPaths: string[] = []
+
+      // Handle multiple photos
+      const photos = request.files('photos', {
+        size: '2mb',
+        extnames: ['jpg', 'jpeg', 'png', 'webp'],
+      })
+      if (photos && photos.length > 0) {
+        for (const file of photos) {
+          const fileErrors = validateImageFile(file, 'photos', false)
+          if (fileErrors) {
+            return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+          }
+        }
+        for (const file of photos) {
+          const path = await storeFile(file, `vehicles/${user.id}`)
+          uploadedPaths.push(path)
+        }
+      }
+
+      // Handle single photo (backward compatibility)
       const photo = request.file('photo', {
         size: '2mb',
         extnames: ['jpg', 'jpeg', 'png', 'webp'],
       })
-      const photoErrors = validateImageFile(photo, 'photo', false)
-      if (photoErrors) {
-        return ApiResponse.error(response, 'Validation failed', photoErrors, 422)
-      }
       if (photo) {
-        photoPath = await storeFile(photo, `vehicles/${user.id}`)
+        const fileErrors = validateImageFile(photo, 'photo', false)
+        if (fileErrors) {
+          return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+        }
+        const path = await storeFile(photo, `vehicles/${user.id}`)
+        uploadedPaths.push(path)
       }
 
       const vehicle = await UserVehicle.create({
@@ -70,7 +92,7 @@ export default class VehicleController {
         year: payload.year,
         registrationNumber: payload.registration_number ?? null,
         vinNumber: payload.vin_number ?? null,
-        photo: photoPath,
+        photos: uploadedPaths.length > 0 ? uploadedPaths : null,
         isDefault: isFirst,
       })
 
@@ -79,7 +101,7 @@ export default class VehicleController {
 
       return ApiResponse.success(
         response,
-        { vehicle: vehicle.serialize(), message: 'Vehicle added successfully' },
+        { vehicle: serializeUserVehicle(vehicle), message: 'Vehicle added successfully' },
         'Vehicle added successfully'
       )
     } catch (error) {
@@ -102,7 +124,7 @@ export default class VehicleController {
         return ApiResponse.error(response, 'Vehicle not found', undefined, 404)
       }
 
-      return ApiResponse.success(response, { vehicle: vehicle.serialize() })
+      return ApiResponse.success(response, { vehicle: serializeUserVehicle(vehicle) })
     } catch {
       return ApiResponse.error(response, 'Unauthorized', undefined, 401)
     }
@@ -127,17 +149,49 @@ export default class VehicleController {
       }
       if (payload.vin_number !== undefined) vehicle.vinNumber = payload.vin_number
 
+      const newPaths: string[] = []
+
+      // Handle multiple photos
+      const photos = request.files('photos', {
+        size: '2mb',
+        extnames: ['jpg', 'jpeg', 'png', 'webp'],
+      })
+      if (photos && photos.length > 0) {
+        for (const file of photos) {
+          const fileErrors = validateImageFile(file, 'photos', false)
+          if (fileErrors) {
+            return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+          }
+        }
+        if (vehicle.photos) {
+          for (const oldPhoto of vehicle.photos) {
+            await deleteFileIfExists(oldPhoto)
+          }
+        }
+        for (const file of photos) {
+          const path = await storeFile(file, `vehicles/${user.id}`)
+          newPaths.push(path)
+        }
+        vehicle.photos = newPaths
+      }
+
+      // Handle single photo (backward compatibility)
       const photo = request.file('photo', {
         size: '2mb',
         extnames: ['jpg', 'jpeg', 'png', 'webp'],
       })
-      const photoErrors = validateImageFile(photo, 'photo', false)
-      if (photoErrors) {
-        return ApiResponse.error(response, 'Validation failed', photoErrors, 422)
-      }
       if (photo) {
-        await deleteFileIfExists(vehicle.photo)
-        vehicle.photo = await storeFile(photo, `vehicles/${user.id}`)
+        const fileErrors = validateImageFile(photo, 'photo', false)
+        if (fileErrors) {
+          return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+        }
+        if (vehicle.photos) {
+          for (const oldPhoto of vehicle.photos) {
+            await deleteFileIfExists(oldPhoto)
+          }
+        }
+        const path = await storeFile(photo, `vehicles/${user.id}`)
+        vehicle.photos = [path]
       }
 
       await vehicle.save()
@@ -146,7 +200,7 @@ export default class VehicleController {
 
       return ApiResponse.success(
         response,
-        { vehicle: vehicle.serialize(), message: 'Vehicle updated successfully' },
+        { vehicle: serializeUserVehicle(vehicle), message: 'Vehicle updated successfully' },
         'Vehicle updated successfully'
       )
     } catch (error) {
@@ -165,7 +219,11 @@ export default class VehicleController {
       }
 
       const wasDefault = vehicle.isDefault
-      await deleteFileIfExists(vehicle.photo)
+      if (vehicle.photos) {
+        for (const oldPhoto of vehicle.photos) {
+          await deleteFileIfExists(oldPhoto)
+        }
+      }
       await vehicle.delete()
 
       if (wasDefault) {
