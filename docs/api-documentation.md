@@ -338,6 +338,78 @@ Response: `data.message`.
 
 Key errors: `401 Unauthorized`.
 
+## USER APP HOME API
+
+### Fetch User Home
+
+`GET {BASE_URL}/api/v1/user/home`
+
+Description: Fetches all data needed for the user app home page: active banners, default vehicle card, localized categories, and tab/badge counts.
+
+Auth: JWT required, role `user`.
+
+Headers:
+
+| Header | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `Authorization` | string | yes | `Bearer <access_token>` |
+
+Request params/body: none.
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Success",
+  "data": {
+    "banners": [
+      {
+        "id": 1,
+        "title": "Enhanced Shock Absorption",
+        "description": "Premium suspension parts for a smoother ride",
+        "image_url": "/uploads/banners/banner.jpg"
+      }
+    ],
+    "default_vehicle": {
+      "id": 5,
+      "car_brand_id": 1,
+      "car_model_id": 10,
+      "year": "2020",
+      "registration_number": "12345",
+      "vin_number": null,
+      "is_default": true,
+      "photo_url": "/uploads/vehicles/photo.jpg",
+      "car_brand": {},
+      "car_model": {}
+    },
+    "categories": [
+      {
+        "id": 1,
+        "name": "Spare Parts",
+        "description": "Find genuine & aftermarket parts",
+        "image_url": "/uploads/categories/spare-parts.jpg"
+      }
+    ],
+    "counts": {
+      "new_requests_count": 4,
+      "new_orders_count": 6,
+      "unread_chats_count": 6,
+      "unread_notifications_count": 4
+    }
+  }
+}
+```
+
+Notes:
+
+- `title`, `description`, category `name`, and category `description` are localized from the authenticated user's `language`.
+- `default_vehicle` is `null` when the user has no default vehicle.
+- Only active banners and active categories are returned.
+
+Key errors: `401 Unauthorized`.
+
+
 ## Profile Setup & Settings
 
 ### Get Profile
@@ -1036,6 +1108,83 @@ Response: `data.message`.
 
 Key errors: `401 Unauthorized`.
 
+## BUSINESS APP HOME API
+
+### Fetch Business Home
+
+`GET {BASE_URL}/api/v1/business/home`
+
+Description: Fetches all data needed for the business app home page: KPI cards, request/order status counts, recent request and order lists, and tab/badge counts.
+
+Auth: JWT required, role `business`.
+
+Headers:
+
+| Header | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `Authorization` | string | yes | `Bearer <access_token>` |
+
+Query:
+
+| Param | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `request_status` | enum | no | Filters `recent_requests`; values: `new`, `accepted`, `confirmed`, `rejected`, `cancelled` |
+| `order_status` | enum | no | Filters `recent_orders`; values: `new`, `pending`, `delivered`, `cancelled` |
+| `limit` | number | no | Defaults to `5`; max `20` |
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Success",
+  "data": {
+    "kpis": {
+      "total_requests": 5,
+      "total_orders": 3,
+      "total_revenue": 755,
+      "pending_amount": 55,
+      "received_amount": 700,
+      "received_this_month": 755,
+      "total_received_this_month": 2,
+      "total_orders_this_month": 3
+    },
+    "request_status_counts": {
+      "new": 2,
+      "accepted": 1,
+      "confirmed": 1,
+      "rejected": 0,
+      "cancelled": 0
+    },
+    "order_status_counts": {
+      "new": 1,
+      "pending": 1,
+      "delivered": 1,
+      "cancelled": 0
+    },
+    "recent_requests": [],
+    "recent_orders": [],
+    "counts": {
+      "new_requests_count": 2,
+      "new_orders_count": 1,
+      "unread_chats_count": 1,
+      "unread_notifications_count": 1
+    }
+  }
+}
+```
+
+Notes:
+
+- `received_this_month` is the paid revenue amount for the current month.
+- `total_received_this_month` is the count of paid orders this month.
+- Revenue and order values are scoped to the authenticated business user.
+- Recent request objects use the same request serializer as other request APIs.
+- Recent order objects use the same order serializer as other order APIs.
+
+Key errors: `401 Unauthorized`.
+
+
 ## Business Profile Setup & Settings
 
 ### Get Profile
@@ -1486,263 +1635,3 @@ Response: `data.message`.
 
 Key errors: `404 Notification not found`, `401 Unauthorized`.
 
-# ADDED HOME PAGE APIs
-
-These endpoints are consolidated app-home payloads. They do not replace the existing listing/detail APIs; they provide the screen-ready summaries needed by the User App and Business App home pages.
-
-## USER APP HOME API
-
-### Fetch User Home
-
-`GET {BASE_URL}/api/v1/user/home`
-
-Description: Fetches all data needed for the user app home page: active banners, default vehicle card, localized categories, and tab/badge counts.
-
-Auth: JWT required, role `user`.
-
-Headers:
-
-| Header | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `Authorization` | string | yes | `Bearer <access_token>` |
-
-Request params/body: none.
-
-Response:
-
-```json
-{
-  "success": true,
-  "message": "Success",
-  "data": {
-    "banners": [
-      {
-        "id": 1,
-        "title": "Enhanced Shock Absorption",
-        "description": "Premium suspension parts for a smoother ride",
-        "image_url": "/uploads/banners/banner.jpg"
-      }
-    ],
-    "default_vehicle": {
-      "id": 5,
-      "car_brand_id": 1,
-      "car_model_id": 10,
-      "year": "2020",
-      "registration_number": "12345",
-      "vin_number": null,
-      "is_default": true,
-      "photo_url": "/uploads/vehicles/photo.jpg",
-      "car_brand": {},
-      "car_model": {}
-    },
-    "categories": [
-      {
-        "id": 1,
-        "name": "Spare Parts",
-        "description": "Find genuine & aftermarket parts",
-        "image_url": "/uploads/categories/spare-parts.jpg"
-      }
-    ],
-    "counts": {
-      "new_requests_count": 4,
-      "new_orders_count": 6,
-      "unread_chats_count": 6,
-      "unread_notifications_count": 4
-    }
-  }
-}
-```
-
-Notes:
-
-- `title`, `description`, category `name`, and category `description` are localized from the authenticated user's `language`.
-- `default_vehicle` is `null` when the user has no default vehicle.
-- Only active banners and active categories are returned.
-
-Key errors: `401 Unauthorized`.
-
-## BUSINESS APP HOME API
-
-### Fetch Business Home
-
-`GET {BASE_URL}/api/v1/business/home`
-
-Description: Fetches all data needed for the business app home page: KPI cards, request/order status counts, recent request and order lists, and tab/badge counts.
-
-Auth: JWT required, role `business`.
-
-Headers:
-
-| Header | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `Authorization` | string | yes | `Bearer <access_token>` |
-
-Query:
-
-| Param | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `request_status` | enum | no | Filters `recent_requests`; values: `new`, `accepted`, `confirmed`, `rejected`, `cancelled` |
-| `order_status` | enum | no | Filters `recent_orders`; values: `new`, `pending`, `delivered`, `cancelled` |
-| `limit` | number | no | Defaults to `5`; max `20` |
-
-Response:
-
-```json
-{
-  "success": true,
-  "message": "Success",
-  "data": {
-    "kpis": {
-      "total_requests": 5,
-      "total_orders": 3,
-      "total_revenue": 755,
-      "pending_amount": 55,
-      "received_amount": 700,
-      "received_this_month": 755,
-      "total_received_this_month": 2,
-      "total_orders_this_month": 3
-    },
-    "request_status_counts": {
-      "new": 2,
-      "accepted": 1,
-      "confirmed": 1,
-      "rejected": 0,
-      "cancelled": 0
-    },
-    "order_status_counts": {
-      "new": 1,
-      "pending": 1,
-      "delivered": 1,
-      "cancelled": 0
-    },
-    "recent_requests": [],
-    "recent_orders": [],
-    "counts": {
-      "new_requests_count": 2,
-      "new_orders_count": 1,
-      "unread_chats_count": 1,
-      "unread_notifications_count": 1
-    }
-  }
-}
-```
-
-Notes:
-
-- `received_this_month` is the paid revenue amount for the current month.
-- `total_received_this_month` is the count of paid orders this month.
-- Revenue and order values are scoped to the authenticated business user.
-- Recent request objects use the same request serializer as other request APIs.
-- Recent order objects use the same order serializer as other order APIs.
-
-Key errors: `401 Unauthorized`.
-
-# ADDED ADMIN BANNER MANAGEMENT APIs
-
-Banner management is available to authenticated admins through JSON APIs and the admin web page at `/admin/banners`.
-
-## List Banners
-
-`GET {BASE_URL}/api/v1/admin/banners`
-
-Auth: JWT/web auth required, role `admin`.
-
-Query: `page`, `limit`, optional `search`.
-
-Response: paginated `data.data[]` banners, each including `image_url`.
-
-## Create Banner
-
-`POST {BASE_URL}/api/v1/admin/banners`
-
-Auth: JWT/web auth required, role `admin`.
-
-Body: multipart form-data.
-
-| Field | Type | Required |
-| --- | --- | --- |
-| `title_en` | string | yes |
-| `title_ar` | string | yes |
-| `description_en` | string | no |
-| `description_ar` | string | no |
-| `sort_order` | number | no |
-| `is_active` | boolean | no |
-| `image` | file | yes |
-
-Response: `201`, `data.banner`.
-
-Key errors: `422 Validation failed`, `500`.
-
-## Get Banner
-
-`GET {BASE_URL}/api/v1/admin/banners/:id`
-
-Auth: JWT/web auth required, role `admin`.
-
-Response: `data.banner`.
-
-Key errors: `404 Banner not found`.
-
-## Update Banner
-
-`PUT {BASE_URL}/api/v1/admin/banners/:id`
-
-Auth: JWT/web auth required, role `admin`.
-
-Body: same as create banner, but `image` is optional.
-
-Response: `data.banner`.
-
-Key errors: `404 Banner not found`, `422 Validation failed`, `500`.
-
-## Delete Banner
-
-`DELETE {BASE_URL}/api/v1/admin/banners/:id`
-
-Auth: JWT/web auth required, role `admin`.
-
-Response: success message.
-
-Key errors: `404 Banner not found`.
-
-## Toggle Banner Status
-
-`PUT {BASE_URL}/api/v1/admin/banners/:id/toggle-status`
-
-Auth: JWT/web auth required, role `admin`.
-
-Response: `data.banner`.
-
-Key errors: `404 Banner not found`.
-
-## Reorder Banners
-
-`PUT {BASE_URL}/api/v1/admin/banners/reorder`
-
-Auth: JWT/web auth required, role `admin`.
-
-Body:
-
-```json
-{
-  "items": [
-    { "id": 1, "sort_order": 1 },
-    { "id": 2, "sort_order": 2 }
-  ]
-}
-```
-
-Response: `data.banners[]`.
-
-Key errors: `422 Validation failed`, `500`.
-
-# CATEGORY DESCRIPTION UPDATE
-
-Category records now support:
-
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `description_en` | string | no | English description |
-| `description_ar` | string | no | Arabic description |
-
-Existing category APIs continue to work and now include these fields in serialized category objects. User home returns a localized `description` field for each category.
