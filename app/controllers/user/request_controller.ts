@@ -183,7 +183,7 @@ export default class RequestController {
         response,
         {
           request: {
-            request_id: created.requestNo,
+            request_no: created.requestNo,
             category: created.category ? (user.language === 'ar' ? created.category.nameAr : created.category.nameEn) : null,
             vehicle: created.userVehicle && created.userVehicle.carBrand && created.userVehicle.carModel
               ? `${created.userVehicle.carBrand.name} ${created.userVehicle.carModel.name}`
@@ -217,7 +217,7 @@ export default class RequestController {
       }
 
       const categoryId = await resolveCategoryId(categoryInput)
-      if (categoryInput !== undefined && categoryId === null) {
+      if (categoryInput && categoryId === null) {
         return ApiResponse.error(response, 'Category not found', undefined, 404)
       }
       if (categoryId) {
@@ -232,11 +232,22 @@ export default class RequestController {
         .withCount('responses', (countQuery) => applyRealOffersFilter(countQuery))
         .paginate(page, limit)
 
-      const data = paginated.all().map((item) =>
-        serializeRequest(item, {
-          responsesCount: Number(item.$extras.responses_count ?? 0),
-        })
-      )
+      const data = paginated.all().map((item) => ({
+        request_no: item.requestNo,
+        category: item.category ? (user.language === 'ar' ? item.category.nameAr : item.category.nameEn) : null,
+        category_id: item.categoryId,
+        status: item.status,
+        title: item.title,
+        spare_part_type: item.sparePartType,
+        no_of_tyres: item.noOfTyres,
+        description: item.description,
+        vehicle: item.userVehicle && item.userVehicle.carBrand && item.userVehicle.carModel
+          ? `${item.userVehicle.carBrand.name} ${item.userVehicle.carModel.name}`
+          : null,
+        year: item.userVehicle?.year ?? null,
+        submitted: item.createdAt?.toISO() ?? null,
+        responses_count: Number(item.$extras.responses_count ?? 0),
+      }))
 
       return ApiResponse.success(response, {
         data,
