@@ -79,7 +79,6 @@
     "@vinejs/vine": "^3.0.1",
     "@vitejs/plugin-react": "^4.7.0",
     "adonis-lucid-soft-deletes": "^2.1.0",
-    "antd": "^6.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "edge.js": "^6.2.1",
