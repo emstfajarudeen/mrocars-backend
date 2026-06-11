@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto'
+import { mkdir } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import type { MultipartFile } from '@adonisjs/core/bodyparser'
+import app from '@adonisjs/core/services/app'
 import drive from '@adonisjs/drive/services/main'
 
 const DEFAULT_IMAGE_OPTIONS = {
@@ -17,9 +20,11 @@ export function validateFile(
     return required ? { [fieldName]: ['File is required'] } : null
   }
 
-  file.sizeLimit = options.size
-  file.allowedExtensions = options.extnames
-  file.validate()
+  if (!file.validated) {
+    file.sizeLimit = options.size
+    file.allowedExtensions = options.extnames
+    file.validate()
+  }
 
   if (!file.isValid) {
     return {
@@ -41,7 +46,20 @@ export function validateImageFile(
 export async function storeFile(file: MultipartFile, folder: string): Promise<string> {
   const fileName = `${randomUUID()}.${file.extname}`
   const key = `${folder}/${fileName}`
-  await file.moveToDisk(key)
+
+  try {
+    // Ensure the target directory exists (prevents ENOENT on first upload)
+    const storagePath = app.makePath('storage', dirname(key))
+    console.log('[storeFile] Creating dir:', storagePath)
+    await mkdir(storagePath, { recursive: true })
+    console.log('[storeFile] Moving file to:', key)
+    await file.moveToDisk(key)
+    console.log('[storeFile] Success:', key)
+  } catch (err) {
+    console.error('[storeFile] FAILED:', err)
+    throw err
+  }
+
   return key
 }
 

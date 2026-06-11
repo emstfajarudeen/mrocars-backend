@@ -54,7 +54,8 @@ export function SearchInput({
         placeholder={placeholder}
         className={cn(
           'w-full rounded-lg border border-border bg-bg-secondary py-2 pl-9 pr-9 text-sm text-text-primary',
-          'placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent'
+          'placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent',
+          '[&::-webkit-search-cancel-button]:appearance-none'
         )}
       />
       {value ? (

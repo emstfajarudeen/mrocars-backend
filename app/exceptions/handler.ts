@@ -1,4 +1,5 @@
 import app from '@adonisjs/core/services/app'
+import logger from '@adonisjs/core/services/logger'
 import { HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import type { StatusPageRange, StatusPageRenderer } from '@adonisjs/core/types/http'
 import { Exception } from '@adonisjs/core/exceptions'
@@ -101,6 +102,9 @@ export default class HttpExceptionHandler extends ExceptionHandler {
         return this.respondWithApiError(ctx, error.message || 'Unauthorized access', 401)
       }
     }
+
+    // Always log unhandled errors to terminal regardless of debug mode
+    logger.error({ err: error, url: ctx.request.url(), method: ctx.request.method() }, 'Unhandled exception')
 
     if (this.debug && error instanceof Error) {
       return this.respondWithApiError(ctx, error.message, 500)

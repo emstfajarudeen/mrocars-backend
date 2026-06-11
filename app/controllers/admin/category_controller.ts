@@ -69,7 +69,9 @@ export default class CategoryController {
       )
     } catch (error) {
       if (isValidationError(error)) throw error
-      return ApiResponse.error(response, 'Something went wrong', undefined, 500)
+      const msg = error instanceof Error ? error.message : String(error)
+      console.error('[Category.store] ERROR:', error)
+      return ApiResponse.error(response, `Debug: ${msg}`, undefined, 500)
     }
   }
 
@@ -121,7 +123,9 @@ export default class CategoryController {
       )
     } catch (error) {
       if (isValidationError(error)) throw error
-      return ApiResponse.error(response, 'Something went wrong', undefined, 500)
+      const msg = error instanceof Error ? error.message : String(error)
+      console.error('[Category.update] ERROR:', error)
+      return ApiResponse.error(response, `Debug: ${msg}`, undefined, 500)
     }
   }
 

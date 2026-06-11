@@ -66,7 +66,9 @@ export default class CarBrandController {
       )
     } catch (error) {
       if (isValidationError(error)) throw error
-      return ApiResponse.error(response, 'Something went wrong', undefined, 500)
+      const msg = error instanceof Error ? `${error.message} | ${error.stack?.split('\n')[1]?.trim()}` : String(error)
+      console.error('[CarBrand.store]', msg)
+      return ApiResponse.error(response, `Debug: ${msg}`, undefined, 500)
     }
   }
 
@@ -122,7 +124,9 @@ export default class CarBrandController {
       )
     } catch (error) {
       if (isValidationError(error)) throw error
-      return ApiResponse.error(response, 'Something went wrong', undefined, 500)
+      const msg = error instanceof Error ? `${error.message} | ${error.stack?.split('\n')[1]?.trim()}` : String(error)
+      console.error('[CarBrand.update]', msg)
+      return ApiResponse.error(response, `Debug: ${msg}`, undefined, 500)
     }
   }
 
