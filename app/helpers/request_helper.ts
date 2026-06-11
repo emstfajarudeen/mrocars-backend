@@ -126,12 +126,14 @@ export function serializeUserVehicle(vehicle: UserVehicle | null) {
     return null
   }
 
-  const data = vehicle.serialize()
+  const { carBrand, carModel, ...data } = vehicle.serialize()
   const photoUrls = (vehicle.photos || []).map((p) => publicUrl(p)).filter(Boolean)
   return {
     ...data,
     photo_url: photoUrls.length > 0 ? photoUrls[0] : null,
     photo_urls: photoUrls,
+    brand: vehicle.carBrand?.name || null,
+    model: vehicle.carModel?.name || null,
     car_brand: vehicle.carBrand ? serializeCarBrand(vehicle.carBrand) : null,
     car_model: vehicle.carModel ? vehicle.carModel.serialize() : null,
   }

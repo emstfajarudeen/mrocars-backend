@@ -182,7 +182,16 @@ export default class RequestController {
       return ApiResponse.success(
         response,
         {
-          request: serializeRequest(created),
+          request: {
+            request_id: created.requestNo,
+            category: created.category ? (user.language === 'ar' ? created.category.nameAr : created.category.nameEn) : null,
+            vehicle: created.userVehicle && created.userVehicle.carBrand && created.userVehicle.carModel
+              ? `${created.userVehicle.carBrand.name} ${created.userVehicle.carModel.name}`
+              : null,
+            year: created.userVehicle?.year ?? null,
+            submitted: created.createdAt?.toISO() ?? null,
+            description: created.description,
+          },
           message: 'Request submitted successfully',
         },
         'Request submitted successfully',
