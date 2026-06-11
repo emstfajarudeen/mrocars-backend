@@ -14,7 +14,6 @@ import {
   isValidationError,
 } from '#helpers/masters'
 import {
-  enrichResponseWithRating,
   applyRealOffersFilter,
   findOwnedRequest,
   generateRequestNo,
@@ -340,6 +339,8 @@ export default class RequestController {
       return ApiResponse.success(response, {
         request: {
           request_no: serviceRequest.requestNo,
+          status: serviceRequest.status,
+          submitted: serviceRequest.createdAt?.toISO() ?? null,
           title: serviceRequest.title,
           category: serviceRequest.category ? (user.language === 'ar' ? serviceRequest.category.nameAr : serviceRequest.category.nameEn) : null,
           spare_part_type: serviceRequest.sparePartType,
@@ -350,6 +351,15 @@ export default class RequestController {
             year: serviceRequest.userVehicle.year || null,
           } : null,
           description: serviceRequest.description,
+          when_needed: serviceRequest.whenNeeded,
+          scheduled_date: serviceRequest.scheduledDate?.toISODate() ?? null,
+          scheduled_time: serviceRequest.scheduledTime,
+          pickup_location_name: serviceRequest.pickupLocationName,
+          pickup_latitude: serviceRequest.pickupLatitude,
+          pickup_longitude: serviceRequest.pickupLongitude,
+          delivery_location_name: serviceRequest.deliveryLocationName,
+          delivery_latitude: serviceRequest.deliveryLatitude,
+          delivery_longitude: serviceRequest.deliveryLongitude,
           photos: serializedReq.attachments?.map((a) => a.file_url) || [],
           voice_note_url: serializedReq.voice_note_url,
           responses,

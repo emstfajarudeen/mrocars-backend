@@ -34,12 +34,7 @@ async function nextSequenceNo(
   prefix: 'REQ' | 'RES' | 'ORD',
   trx: TransactionClientContract
 ): Promise<string> {
-  const row = await trx
-    .from(table)
-    .select(column)
-    .orderBy('id', 'desc')
-    .forUpdate()
-    .first()
+  const row = await trx.from(table).select(column).orderBy('id', 'desc').forUpdate().first()
 
   const current = parseSequenceNumber(row?.[column] as string | undefined, prefix)
   return formatSequenceNumber(current + 1, prefix)
@@ -65,7 +60,9 @@ export function categorySlug(nameEn: string): string {
   return nameEn.toLowerCase().replace(/\s+/g, '-')
 }
 
-export async function resolveCategoryId(input: string | number | undefined): Promise<number | null> {
+export async function resolveCategoryId(
+  input: string | number | undefined
+): Promise<number | null> {
   if (input === undefined || input === null || input === '') {
     return null
   }
@@ -87,7 +84,9 @@ export async function isGuestUser(userId: number): Promise<boolean> {
   if (!user) {
     return true
   }
-  return user.password === null || (user.email.startsWith('guest_') && user.email.endsWith('@guest.com'))
+  return (
+    user.password === null || (user.email.startsWith('guest_') && user.email.endsWith('@guest.com'))
+  )
 }
 
 export async function getBusinessRating(businessUserId: number) {
@@ -101,7 +100,9 @@ export async function getBusinessRating(businessUserId: number) {
 
   return {
     rating_avg: avg !== null ? Math.round(Number(avg) * 10) / 10 : null,
+    ratingAvg: avg !== null ? Math.round(Number(avg) * 10) / 10 : null,
     total_reviews: total,
+    totalReviews: total,
   }
 }
 
@@ -110,6 +111,7 @@ export function serializeUserBrief(user: User) {
     id: user.id,
     name: user.name,
     avatar_url: publicUrl(user.avatar),
+    avatarUrl: publicUrl(user.avatar),
   }
 }
 
@@ -131,11 +133,15 @@ export function serializeUserVehicle(vehicle: UserVehicle | null) {
   return {
     ...data,
     photo_url: photoUrls.length > 0 ? photoUrls[0] : null,
+    photoUrl: photoUrls.length > 0 ? photoUrls[0] : null,
     photo_urls: photoUrls,
+    photoUrls: photoUrls,
     brand: vehicle.carBrand?.name || null,
     model: vehicle.carModel?.name || null,
     car_brand: vehicle.carBrand ? serializeCarBrand(vehicle.carBrand) : null,
+    carBrand: vehicle.carBrand ? serializeCarBrand(vehicle.carBrand) : null,
     car_model: vehicle.carModel ? vehicle.carModel.serialize() : null,
+    carModel: vehicle.carModel ? vehicle.carModel.serialize() : null,
   }
 }
 
@@ -143,6 +149,7 @@ export function serializeRequestAttachment(attachment: RequestAttachment) {
   return {
     ...attachment.serialize(),
     file_url: publicUrl(attachment.filePath),
+    fileUrl: publicUrl(attachment.filePath),
   }
 }
 
@@ -153,7 +160,36 @@ export function serializeRequest(
   const data = request.serialize()
   return {
     ...data,
+    request_no: request.requestNo,
+    requestNo: request.requestNo,
+    spare_part_type: request.sparePartType,
+    sparePartType: request.sparePartType,
+    no_of_tyres: request.noOfTyres,
+    noOfTyres: request.noOfTyres,
+    when_needed: request.whenNeeded,
+    whenNeeded: request.whenNeeded,
+    scheduled_date: request.scheduledDate ? request.scheduledDate.toISODate() : null,
+    scheduledDate: request.scheduledDate ? request.scheduledDate.toISODate() : null,
+    scheduled_time: request.scheduledTime,
+    scheduledTime: request.scheduledTime,
+    pickup_location_name: request.pickupLocationName,
+    pickupLocationName: request.pickupLocationName,
+    pickup_latitude: request.pickupLatitude,
+    pickupLatitude: request.pickupLatitude,
+    pickup_longitude: request.pickupLongitude,
+    pickupLongitude: request.pickupLongitude,
+    delivery_location_name: request.deliveryLocationName,
+    deliveryLocationName: request.deliveryLocationName,
+    delivery_latitude: request.deliveryLatitude,
+    deliveryLatitude: request.deliveryLatitude,
+    delivery_longitude: request.deliveryLongitude,
+    deliveryLongitude: request.deliveryLongitude,
     voice_note_url: publicUrl(request.voiceNote),
+    voiceNoteUrl: publicUrl(request.voiceNote),
+    created_at: request.createdAt ? request.createdAt.toISO() : null,
+    createdAt: request.createdAt ? request.createdAt.toISO() : null,
+    updated_at: request.updatedAt ? request.updatedAt.toISO() : null,
+    updatedAt: request.updatedAt ? request.updatedAt.toISO() : null,
     category: request.category ? serializeCategory(request.category) : null,
     user_vehicle: serializeUserVehicle(request.userVehicle ?? null),
     user: request.user ? serializeUserBrief(request.user) : null,
@@ -169,8 +205,15 @@ export function serializeBusinessProfile(profile: BusinessProfile, language: Use
   const data = profile.serialize()
   return {
     ...data,
+    business_name: profile.businessName,
+    businessName: profile.businessName,
     avatar_url: publicUrl(profile.avatar),
-    governorate: profile.governorate ? (language === 'ar' ? profile.governorate.nameAr : profile.governorate.nameEn) : null,
+    avatarUrl: publicUrl(profile.avatar),
+    governorate: profile.governorate
+      ? language === 'ar'
+        ? profile.governorate.nameAr
+        : profile.governorate.nameEn
+      : null,
     area: profile.area ? (language === 'ar' ? profile.area.nameAr : profile.area.nameEn) : null,
   }
 }
@@ -183,12 +226,25 @@ export function serializeRequestResponse(
   const language = options?.language || 'en'
   const serialized: Record<string, unknown> = {
     ...data,
+    response_no: response.responseNo,
+    responseNo: response.responseNo,
+    request_id: response.requestId,
+    requestId: response.requestId,
+    business_user_id: response.businessUserId,
+    businessUserId: response.businessUserId,
+    offer_validity_type: response.offerValidityType,
+    offerValidityType: response.offerValidityType,
+    offer_valid_until: response.offerValidUntil ? response.offerValidUntil.toISODate() : null,
+    offerValidUntil: response.offerValidUntil ? response.offerValidUntil.toISODate() : null,
     attachment_urls: (response.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
     business_user: response.businessUser ? serializeUserBrief(response.businessUser) : null,
   }
 
   if (options?.includeBusinessProfile && response.businessUser?.businessProfile) {
-    serialized.business_profile = serializeBusinessProfile(response.businessUser.businessProfile, language)
+    serialized.business_profile = serializeBusinessProfile(
+      response.businessUser.businessProfile,
+      language
+    )
   }
 
   return serialized
@@ -205,7 +261,7 @@ export async function enrichResponseWithRating(
   if (response.businessUser?.businessProfile) {
     const brief = serializeBusinessProfileBrief(response.businessUser.businessProfile, rating)
     serialized.business_profile = {
-      ...(serialized.business_profile as Record<string, unknown> || {}),
+      ...((serialized.business_profile as Record<string, unknown>) || {}),
       ...brief,
     }
   }
@@ -213,10 +269,15 @@ export async function enrichResponseWithRating(
   return serialized
 }
 
-export function serializeBusinessProfileBrief(profile: BusinessProfile, rating: Awaited<ReturnType<typeof getBusinessRating>>) {
+export function serializeBusinessProfileBrief(
+  profile: BusinessProfile,
+  rating: Awaited<ReturnType<typeof getBusinessRating>>
+) {
   return {
     business_name: profile.businessName,
+    businessName: profile.businessName,
     avatar_url: publicUrl(profile.avatar),
+    avatarUrl: publicUrl(profile.avatar),
     ...rating,
   }
 }
@@ -229,25 +290,35 @@ export function isRejectionMarker(response: RequestResponse): boolean {
   return response.status === 'rejected' && Number(response.price) === 0
 }
 
-export function applyRealOffersFilter<T extends { where: (column: string, operator: string, value: number) => T }>(
-  query: T
-): T {
+export function applyRealOffersFilter<
+  T extends { where: (column: string, operator: string, value: number) => T },
+>(query: T): T {
   return query.where('price', '>', 0)
 }
 
-export function serializeDeliveryAddress(address: UserAddress | null, language: UserLanguage = 'en') {
+export function serializeDeliveryAddress(
+  address: UserAddress | null,
+  language: UserLanguage = 'en'
+) {
   if (!address) {
     return null
   }
 
   return {
     ...address.serialize(),
-    governorate: address.governorate ? (language === 'ar' ? address.governorate.nameAr : address.governorate.nameEn) : null,
+    governorate: address.governorate
+      ? language === 'ar'
+        ? address.governorate.nameAr
+        : address.governorate.nameEn
+      : null,
     area: address.area ? (language === 'ar' ? address.area.nameAr : address.area.nameEn) : null,
   }
 }
 
-export function serializeBusinessProfileForOrder(profile: BusinessProfile | null, language: UserLanguage = 'en') {
+export function serializeBusinessProfileForOrder(
+  profile: BusinessProfile | null,
+  language: UserLanguage = 'en'
+) {
   if (!profile) {
     return null
   }
@@ -256,7 +327,11 @@ export function serializeBusinessProfileForOrder(profile: BusinessProfile | null
     business_name: profile.businessName,
     avatar_url: publicUrl(profile.avatar),
     address: {
-      governorate: profile.governorate ? (language === 'ar' ? profile.governorate.nameAr : profile.governorate.nameEn) : null,
+      governorate: profile.governorate
+        ? language === 'ar'
+          ? profile.governorate.nameAr
+          : profile.governorate.nameEn
+        : null,
       area: profile.area ? (language === 'ar' ? profile.area.nameAr : profile.area.nameEn) : null,
       block: profile.block,
       street: profile.street,

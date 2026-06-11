@@ -59,7 +59,9 @@ export function buildPaginationMeta(paginator: SimplePaginatorContract<unknown>)
 }
 
 export async function countRelated(
-  query: { where: (column: string, value: number) => { count: (column: string) => Promise<unknown[]> } },
+  query: {
+    where: (column: string, value: number) => { count: (column: string) => Promise<unknown[]> }
+  },
   column: string,
   value: number
 ): Promise<number> {
@@ -77,9 +79,19 @@ export function serializeCarBrand(brand: CarBrand) {
 }
 
 export function serializeCategory(category: Category) {
+  const data = category.serialize()
   return {
-    ...category.serialize(),
+    ...data,
+    name_en: category.nameEn,
+    nameEn: category.nameEn,
+    name_ar: category.nameAr,
+    nameAr: category.nameAr,
+    description_en: category.descriptionEn,
+    descriptionEn: category.descriptionEn,
+    description_ar: category.descriptionAr,
+    descriptionAr: category.descriptionAr,
     image_url: publicUrl(category.image),
+    imageUrl: publicUrl(category.image),
   }
 }
 
