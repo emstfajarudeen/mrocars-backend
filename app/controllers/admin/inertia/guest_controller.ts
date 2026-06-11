@@ -23,7 +23,7 @@ function serializeAdminUserListItem(user: User) {
   }
 }
 
-export default class UserController {
+export default class GuestController {
   async index({ request, inertia }: HttpContext) {
     const { page, limit } = getPaginationParams(request)
     const search = request.input('search') as string | undefined
@@ -31,8 +31,7 @@ export default class UserController {
 
     const query = User.query()
       .where('role', 'user')
-      .whereNotNull('password')
-      .whereNot('email', 'like', 'guest_%@guest.com')
+      .where((q) => q.whereNull('password').orWhere('email', 'like', 'guest_%@guest.com'))
       .orderBy('createdAt', 'desc')
 
     applySearch(query, search, USER_SEARCH_COLUMNS)
@@ -43,8 +42,8 @@ export default class UserController {
 
     const paginated = await query.withCount('requests').withCount('orders').paginate(page, limit)
 
-    return inertia.render('admin/Users', {
-      users: paginated.all().map((user) => serializeAdminUserListItem(user)),
+    return inertia.render('admin/Guests', {
+      guests: paginated.all().map((user) => serializeAdminUserListItem(user)),
       meta: buildPaginationMeta(paginated),
       filters: {
         search: search ?? null,
@@ -57,8 +56,7 @@ export default class UserController {
     const user = await User.query()
       .where('id', params.id)
       .where('role', 'user')
-      .whereNotNull('password')
-      .whereNot('email', 'like', 'guest_%@guest.com')
+      .where((q) => q.whereNull('password').orWhere('email', 'like', 'guest_%@guest.com'))
       .preload('vehicles', (vehicleQuery) => {
         vehicleQuery.preload('carBrand').preload('carModel')
       })
@@ -68,7 +66,7 @@ export default class UserController {
       .first()
 
     if (!user) {
-      return response.redirect('/admin/users')
+      return response.redirect('/admin/guests')
     }
 
     const [requestsCount, ordersCount, spentRow] = await Promise.all([
@@ -101,7 +99,7 @@ export default class UserController {
         avatar_url: publicUrl(user.avatar),
         vehicles,
         addresses,
-        is_guest: false,
+        is_guest: true,
         stats: {
           total_requests: Number(requestsCount[0].total),
           total_orders: Number(ordersCount[0].total),

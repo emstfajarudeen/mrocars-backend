@@ -35,7 +35,11 @@ export default class UserController {
     const search = request.input('search') as string | undefined
     const isActive = parseBooleanQuery(request.input('is_active'))
 
-    const query = User.query().where('role', 'user').orderBy('createdAt', 'desc')
+    const query = User.query()
+      .where('role', 'user')
+      .whereNotNull('password')
+      .whereNot('email', 'like', 'guest_%@guest.com')
+      .orderBy('createdAt', 'desc')
 
     applySearch(query, search, USER_SEARCH_COLUMNS)
 

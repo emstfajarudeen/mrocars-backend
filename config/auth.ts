@@ -15,7 +15,7 @@ const authConfig = defineConfig({
       }),
     }),
     jwt: jwtGuard({
-      tokenExpiresIn: '15m',
+      tokenExpiresIn: '7d',
       refreshTokenExpiresIn: '7d',
       secret: env.get('JWT_SECRET'),
       provider: sessionUserProvider({

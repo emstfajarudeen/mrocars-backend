@@ -45,6 +45,7 @@ const navGroups = [
     label: 'Users',
     items: [
       { label: 'Users', href: '/admin/users', icon: Users },
+      { label: 'Guests', href: '/admin/guests', icon: User },
       { label: 'Businesses', href: '/admin/businesses', icon: Building2 },
     ],
   },

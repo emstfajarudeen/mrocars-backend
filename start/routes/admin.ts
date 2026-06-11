@@ -135,6 +135,13 @@ router
 
     router
       .group(() => {
+        router.get('/', '#controllers/admin/guest_controller.index')
+      })
+      .prefix('/guests')
+      .use([middleware.auth({ guards: ['web', 'jwt'] }), middleware.role({ role: 'admin' })])
+
+    router
+      .group(() => {
         router.get('/', '#controllers/admin/business_controller.index')
         router.post('/', '#controllers/admin/business_controller.store')
         router.put('/:id/toggle-status', '#controllers/admin/business_controller.toggleStatus')

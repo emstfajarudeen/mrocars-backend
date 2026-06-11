@@ -8,6 +8,7 @@ import { PageHeader } from '~/components/ui/PageHeader'
 import { StatCard } from '~/components/ui/StatCard'
 import { Table } from '~/components/ui/Table'
 import { useToast } from '~/components/ui/Toast'
+import { Switch } from '~/components/ui/Switch'
 import { apiMutate, reloadPage } from '~/lib/mutate'
 import { formatStatusLabel, statusToBadge } from '~/lib/status'
 import { formatCurrency, formatDate } from '~/lib/utils'
@@ -25,6 +26,7 @@ type Props = {
     language: string
     is_active: boolean
     created_at: string
+    is_guest?: boolean
     stats: { total_requests: number; total_orders: number; total_spent: number }
     vehicles: Array<{ id: number; year: string; isDefault: boolean; car_brand: { name: string } | null; car_model: { name: string } | null }>
     addresses: Array<{ id: number; label: string; block: string; street: string; isDefault: boolean; governorate: { nameEn: string } | null; area: { nameEn: string } | null }>
@@ -38,15 +40,17 @@ export default function UserDetail({ user }: Props) {
   return (
     <>
       <Head title={user.name} />
-      <Link href="/admin/users" className="mb-4 inline-flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary">
-        <ArrowLeft className="h-4 w-4" /> Back to users
+      <Link href={user.is_guest ? "/admin/guests" : "/admin/users"} className="mb-4 inline-flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary">
+        <ArrowLeft className="h-4 w-4" /> Back to {user.is_guest ? "guests" : "users"}
       </Link>
       <PageHeader
         title={user.name}
         action={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={async () => { await apiMutate('PUT', `/users/${user.id}/toggle-status`, {}); reloadPage() }}>Toggle Status</Button>
-            <Button variant="danger" onClick={() => setConfirmDelete(true)}><Trash2 className="h-4 w-4" /> Delete</Button>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <span>Status</span>
+              <Switch checked={user.is_active} onChange={async () => { await apiMutate('PUT', `/users/${user.id}/toggle-status`, {}); reloadPage() }} />
+            </label>
           </div>
         }
       />
@@ -90,7 +94,20 @@ export default function UserDetail({ user }: Props) {
           </div>
         </Card>
       </div>
-      <ConfirmDialog open={confirmDelete} onOpenChange={setConfirmDelete} title="Delete user?" onConfirm={async () => { await apiMutate('DELETE', `/users/${user.id}`, {}); toast.success('Deleted'); window.location.href = '/admin/users' }} variant="danger" />
+      <div className="mt-6 mb-6">
+        <Card title="Danger Zone" className="border-red-200">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h4 className="font-medium text-red-600">Delete this {user.is_guest ? 'guest' : 'user'}</h4>
+              <p className="text-sm text-text-secondary">Once you delete a {user.is_guest ? 'guest' : 'user'}, there is no going back. Please be certain.</p>
+            </div>
+            <Button variant="danger" onClick={() => setConfirmDelete(true)}>
+              <Trash2 className="h-4 w-4" /> Delete {user.is_guest ? 'Guest' : 'User'}
+            </Button>
+          </div>
+        </Card>
+      </div>
+      <ConfirmDialog open={confirmDelete} onOpenChange={setConfirmDelete} title={user.is_guest ? "Delete guest?" : "Delete user?"} onConfirm={async () => { await apiMutate('DELETE', `/users/${user.id}`, {}); toast.success('Deleted'); window.location.href = user.is_guest ? '/admin/guests' : '/admin/users' }} variant="danger" />
     </>
   )
 }

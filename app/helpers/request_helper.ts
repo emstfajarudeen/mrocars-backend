@@ -87,7 +87,7 @@ export async function isGuestUser(userId: number): Promise<boolean> {
   if (!user) {
     return true
   }
-  return user.password === null
+  return user.password === null || (user.email.startsWith('guest_') && user.email.endsWith('@guest.com'))
 }
 
 export async function getBusinessRating(businessUserId: number) {

@@ -16,7 +16,7 @@ import { apiMutate, reloadPage, visitAdmin } from '~/lib/mutate'
 import { formatStatusLabel, statusToBadge } from '~/lib/status'
 import { formatDate, type PaginationMeta } from '~/lib/utils'
 
-type User = {
+type Guest = {
   id: number
   name: string
   email: string
@@ -29,27 +29,27 @@ type User = {
   total_orders: number
 }
 
-type Props = { users: User[]; meta: PaginationMeta; filters: { search: string | null; is_active: boolean | null } }
+type Props = { guests: Guest[]; meta: PaginationMeta; filters: { search: string | null; is_active: boolean | null } }
 
-export default function Users({ users, meta, filters }: Props) {
+export default function Guests({ guests, meta, filters }: Props) {
   const toast = useToast()
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
   return (
     <>
-      <Head title="Users" />
-      <PageHeader title="Users" description="Manage platform users" />
+      <Head title="Guests" />
+      <PageHeader title="Guests" description="Manage platform guest users" />
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="flex-1 min-w-[180px] max-w-sm">
           <SearchInput
             defaultValue={filters.search ?? ''}
-            onSearch={(s) => visitAdmin('/admin/users', { search: s, page: 1 })}
+            onSearch={(s) => visitAdmin('/admin/guests', { search: s, page: 1 })}
           />
         </div>
         <Select
           className="w-40"
           value={filters.is_active === null ? '' : String(filters.is_active)}
-          onChange={(v) => visitAdmin('/admin/users', { is_active: v === '' ? null : v, page: 1 })}
+          onChange={(v) => visitAdmin('/admin/guests', { is_active: v === '' ? null : v, page: 1 })}
           placeholder="All status"
           options={[
             { value: '', label: 'All status' },
@@ -77,11 +77,14 @@ export default function Users({ users, meta, filters }: Props) {
           {
             key: 'phone',
             label: 'Phone',
-            render: (r) => (
-              <span className="font-mono text-sm">
-                {r.phone_code} {r.phone_number}
-              </span>
-            ),
+            render: (r) =>
+              r.phone_number ? (
+                <span className="font-mono text-sm">
+                  {r.phone_code} {r.phone_number}
+                </span>
+              ) : (
+                <span className="text-text-muted">—</span>
+              ),
           },
           { key: 'requests', label: 'Requests', render: (r) => <span className="font-mono">{r.total_requests}</span> },
           { key: 'orders', label: 'Orders', render: (r) => <span className="font-mono">{r.total_orders}</span> },
@@ -120,7 +123,7 @@ export default function Users({ users, meta, filters }: Props) {
                     >
                       <DropdownMenu.Item asChild>
                         <Link
-                          href={`/admin/users/${r.id}`}
+                          href={`/admin/guests/${r.id}`}
                           className="flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-text-primary outline-none hover:bg-bg-hover transition-colors"
                         >
                           <Eye className="h-4 w-4" />
@@ -141,13 +144,13 @@ export default function Users({ users, meta, filters }: Props) {
             ),
           },
         ]}
-        data={users}
+        data={guests}
       />
       <Pagination meta={meta} />
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={() => setDeleteId(null)}
-        title="Delete user?"
+        title="Delete guest?"
         description="This action cannot be undone."
         onConfirm={async () => {
           if (deleteId) {

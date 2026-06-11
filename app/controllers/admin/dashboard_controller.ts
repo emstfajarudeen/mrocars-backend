@@ -33,12 +33,14 @@ export default class DashboardController {
       pendingRow,
       revenueThisMonthRow,
     ] = await Promise.all([
-      db.from('users').where('role', 'user').whereNull('deleted_at').count('* as total'),
-      db.from('users').where('role', 'user').whereNull('deleted_at').where('is_active', true).count('* as total'),
-      db.from('users').where('role', 'user').whereNull('deleted_at').where('is_active', false).count('* as total'),
+      db.from('users').where('role', 'user').whereNotNull('password').whereNot('email', 'like', 'guest_%@guest.com').whereNull('deleted_at').count('* as total'),
+      db.from('users').where('role', 'user').whereNotNull('password').whereNot('email', 'like', 'guest_%@guest.com').whereNull('deleted_at').where('is_active', true).count('* as total'),
+      db.from('users').where('role', 'user').whereNotNull('password').whereNot('email', 'like', 'guest_%@guest.com').whereNull('deleted_at').where('is_active', false).count('* as total'),
       db
         .from('users')
         .where('role', 'user')
+        .whereNotNull('password')
+        .whereNot('email', 'like', 'guest_%@guest.com')
         .whereNull('deleted_at')
         .where('created_at', '>=', monthStart)
         .count('* as total'),
@@ -174,6 +176,8 @@ export default class DashboardController {
 
     const recentUsers = await User.query()
       .where('role', 'user')
+      .whereNotNull('password')
+      .whereNot('email', 'like', 'guest_%@guest.com')
       .orderBy('createdAt', 'desc')
       .limit(5)
 
