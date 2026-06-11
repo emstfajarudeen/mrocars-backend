@@ -183,7 +183,7 @@ export function serializeRequestResponse(
   const language = options?.language || 'en'
   const serialized: Record<string, unknown> = {
     ...data,
-    attachment_url: publicUrl(response.attachment),
+    attachment_urls: (response.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
     business_user: response.businessUser ? serializeUserBrief(response.businessUser) : null,
   }
 

@@ -310,7 +310,7 @@ export default class RequestController {
             response_id: item.id,
             price: item.price,
             description: item.notes,
-            attachment: item.attachment ? publicUrl(item.attachment) : null,
+            attachment_urls: (item.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
             offer_validity_type: item.offerValidityType,
             offer_valid_until: item.offerValidUntil?.toISO() ?? item.offerValidUntil ?? null,
             business: businessProfile ? {

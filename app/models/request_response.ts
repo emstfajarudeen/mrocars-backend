@@ -32,8 +32,15 @@ export default class RequestResponse extends compose(BaseModel, SoftDeletes) {
   @column.date()
   declare offerValidUntil: DateTime | null
 
-  @column()
-  declare attachment: string | null
+  @column({
+    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
+    consume: (value: string | string[] | null) => {
+      if (!value) return []
+      if (Array.isArray(value)) return value
+      try { return JSON.parse(value) } catch { return [] }
+    },
+  })
+  declare attachments: string[]
 
   @column()
   declare status: ResponseStatus

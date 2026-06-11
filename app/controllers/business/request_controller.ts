@@ -228,15 +228,12 @@ export default class RequestController {
         await existing.delete()
       }
 
-      const attachmentFile = request.file('attachment', RESPONSE_ATTACHMENT_OPTIONS)
-      const attachmentErrors = validateFile(
-        attachmentFile,
-        'attachment',
-        RESPONSE_ATTACHMENT_OPTIONS,
-        false
-      )
-      if (attachmentErrors) {
-        return ApiResponse.error(response, 'Validation failed', attachmentErrors, 422)
+      const attachmentFiles = request.files('attachments', RESPONSE_ATTACHMENT_OPTIONS)
+      for (const [index, file] of attachmentFiles.entries()) {
+        const fileErrors = validateFile(file, `attachments[${index}]`, RESPONSE_ATTACHMENT_OPTIONS, false)
+        if (fileErrors) {
+          return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+        }
       }
 
       const requestResponse = await db.transaction(async (trx) => {
@@ -253,14 +250,17 @@ export default class RequestController {
             offerValidUntil: payload.offer_valid_until
               ? DateTime.fromJSDate(payload.offer_valid_until)
               : null,
-            attachment: null,
+            attachments: [],
             status: 'pending',
           },
           { client: trx }
         )
 
-        if (attachmentFile) {
-          created.attachment = await storeFile(attachmentFile, `responses/${created.id}`)
+        if (attachmentFiles.length > 0) {
+          const stored = await Promise.all(
+            attachmentFiles.map((file) => storeFile(file, `responses/${created.id}`))
+          )
+          created.attachments = stored
           created.useTransaction(trx)
           await created.save()
         }
@@ -342,20 +342,20 @@ export default class RequestController {
           : null
       }
 
-      const attachmentFile = request.file('attachment', RESPONSE_ATTACHMENT_OPTIONS)
-      const attachmentErrors = validateFile(
-        attachmentFile,
-        'attachment',
-        RESPONSE_ATTACHMENT_OPTIONS,
-        false
-      )
-      if (attachmentErrors) {
-        return ApiResponse.error(response, 'Validation failed', attachmentErrors, 422)
+      const attachmentFiles = request.files('attachments', RESPONSE_ATTACHMENT_OPTIONS)
+      for (const [index, file] of attachmentFiles.entries()) {
+        const fileErrors = validateFile(file, `attachments[${index}]`, RESPONSE_ATTACHMENT_OPTIONS, false)
+        if (fileErrors) {
+          return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+        }
       }
 
-      if (attachmentFile) {
-        await deleteFileIfExists(requestResponse.attachment)
-        requestResponse.attachment = await storeFile(attachmentFile, `responses/${requestResponse.id}`)
+      if (attachmentFiles.length > 0) {
+        // Delete all old attachments
+        await Promise.all((requestResponse.attachments ?? []).map((p) => deleteFileIfExists(p)))
+        requestResponse.attachments = await Promise.all(
+          attachmentFiles.map((file) => storeFile(file, `responses/${requestResponse.id}`))
+        )
       }
 
       await requestResponse.save()
@@ -406,7 +406,7 @@ export default class RequestController {
             price: '0',
             offerValidityType: 'open',
             offerValidUntil: null,
-            attachment: null,
+            attachments: [],
             status: 'rejected',
           },
           { client: trx }
