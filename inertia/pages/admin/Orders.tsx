@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react'
 import { Eye } from 'lucide-react'
 import { Badge } from '~/components/ui/Badge'
 import { Button } from '~/components/ui/Button'
-import { Input } from '~/components/ui/Input'
+import { DatePicker } from '~/components/ui/DatePicker'
 import { PageHeader } from '~/components/ui/PageHeader'
 import { Pagination } from '~/components/ui/Pagination'
 import { SearchInput } from '~/components/ui/SearchInput'
@@ -42,8 +42,8 @@ export default function Orders({ orders, meta, filters }: Props) {
     <>
       <Head title="Orders" />
       <PageHeader title="Orders" description="All platform orders" />
-      <div className="mb-6 flex flex-wrap gap-4">
-        <div className="max-w-sm flex-1">
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[180px] max-w-sm">
           <SearchInput
             defaultValue={filters.search ?? ''}
             onSearch={(s) => visitAdmin('/admin/orders', { ...filters, search: s, page: 1 })}
@@ -52,33 +52,38 @@ export default function Orders({ orders, meta, filters }: Props) {
         <Select
           className="w-36"
           value={filters.status ?? ''}
-          onChange={(e) => visitAdmin('/admin/orders', { ...filters, status: e.target.value || null, page: 1 })}
-        >
-          <option value="">All status</option>
-          {['new', 'pending', 'delivered', 'cancelled'].map((s) => (
-            <option key={s} value={s}>{formatStatusLabel(s)}</option>
-          ))}
-        </Select>
+          onChange={(v) => visitAdmin('/admin/orders', { ...filters, status: v || null, page: 1 })}
+          placeholder="All status"
+          options={[
+            { value: '', label: 'All status' },
+            { value: 'new', label: 'New' },
+            { value: 'pending', label: 'Pending' },
+            { value: 'delivered', label: 'Delivered' },
+            { value: 'cancelled', label: 'Cancelled' },
+          ]}
+        />
         <Select
           className="w-40"
           value={filters.payment_status ?? ''}
-          onChange={(e) => visitAdmin('/admin/orders', { ...filters, payment_status: e.target.value || null, page: 1 })}
-        >
-          <option value="">All payment</option>
-          <option value="paid">Paid</option>
-          <option value="unpaid">Unpaid</option>
-        </Select>
-        <Input
-          type="date"
-          className="w-40"
-          defaultValue={filters.date_from ?? ''}
-          onChange={(e) => visitAdmin('/admin/orders', { ...filters, date_from: e.target.value, page: 1 })}
+          onChange={(v) => visitAdmin('/admin/orders', { ...filters, payment_status: v || null, page: 1 })}
+          placeholder="All payment"
+          options={[
+            { value: '', label: 'All payment' },
+            { value: 'paid', label: 'Paid' },
+            { value: 'unpaid', label: 'Unpaid' },
+          ]}
         />
-        <Input
-          type="date"
+        <DatePicker
           className="w-40"
-          defaultValue={filters.date_to ?? ''}
-          onChange={(e) => visitAdmin('/admin/orders', { ...filters, date_to: e.target.value, page: 1 })}
+          value={filters.date_from ?? ''}
+          onChange={(v) => visitAdmin('/admin/orders', { ...filters, date_from: v, page: 1 })}
+          placeholder="From date"
+        />
+        <DatePicker
+          className="w-40"
+          value={filters.date_to ?? ''}
+          onChange={(v) => visitAdmin('/admin/orders', { ...filters, date_to: v, page: 1 })}
+          placeholder="To date"
         />
       </div>
       <Table
@@ -87,14 +92,38 @@ export default function Orders({ orders, meta, filters }: Props) {
           { key: 'user', label: 'User', render: (r) => r.user?.name ?? '—' },
           { key: 'business', label: 'Business', render: (r) => r.business_profile?.business_name ?? '—' },
           { key: 'category', label: 'Category', render: (r) => r.request?.category?.nameEn ?? '—' },
-          { key: 'amount', label: 'Total', render: (r) => <span className="font-mono text-accent">{formatCurrency(r.total_amount)}</span> },
+          {
+            key: 'amount',
+            label: 'Total',
+            render: (r) => <span className="font-mono text-accent">{formatCurrency(r.total_amount)}</span>,
+          },
           { key: 'payment', label: 'Payment', render: (r) => r.payment_method ?? '—' },
-          { key: 'status', label: 'Status', render: (r) => <Badge variant={statusToBadge(r.status)}>{formatStatusLabel(r.status)}</Badge> },
-          { key: 'pay', label: 'Paid', render: (r) => <Badge variant={statusToBadge(r.paymentStatus)}>{formatStatusLabel(r.paymentStatus)}</Badge> },
+          {
+            key: 'status',
+            label: 'Status',
+            render: (r) => (
+              <Badge variant={statusToBadge(r.status)}>{formatStatusLabel(r.status)}</Badge>
+            ),
+          },
+          {
+            key: 'pay',
+            label: 'Paid',
+            render: (r) => (
+              <Badge variant={statusToBadge(r.paymentStatus)}>{formatStatusLabel(r.paymentStatus)}</Badge>
+            ),
+          },
           { key: 'date', label: 'Date', render: (r) => formatDate(String(r.createdAt)) },
-          { key: 'a', label: '', render: (r) => (
-            <Link href={`/admin/orders/${r.id}`}><Button size="sm" variant="ghost"><Eye className="h-4 w-4" /></Button></Link>
-          ) },
+          {
+            key: 'a',
+            label: '',
+            render: (r) => (
+              <Link href={`/admin/orders/${r.id}`}>
+                <Button size="sm" variant="ghost">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </Link>
+            ),
+          },
         ]}
         data={orders}
       />

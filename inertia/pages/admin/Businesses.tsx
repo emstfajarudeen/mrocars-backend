@@ -30,27 +30,97 @@ export default function Businesses({ businesses, meta, filters }: Props) {
   return (
     <>
       <Head title="Businesses" />
-      <PageHeader title="Businesses" action={<Link href="/admin/businesses/create"><Button><Plus className="h-4 w-4" /> Add Business</Button></Link>} />
-      <div className="mb-6 flex flex-wrap gap-4">
-        <div className="max-w-sm flex-1"><SearchInput defaultValue={filters.search ?? ''} onSearch={(s) => visitAdmin('/admin/businesses', { search: s, page: 1 })} /></div>
-        <Select className="w-36" value={filters.is_active === null ? '' : String(filters.is_active)} onChange={(e) => visitAdmin('/admin/businesses', { is_active: e.target.value || null, page: 1 })}>
-          <option value="">All status</option><option value="true">Active</option><option value="false">Inactive</option>
-        </Select>
-        <Select className="w-36" value={filters.is_approved === null ? '' : String(filters.is_approved)} onChange={(e) => visitAdmin('/admin/businesses', { is_approved: e.target.value || null, page: 1 })}>
-          <option value="">All approval</option><option value="true">Approved</option><option value="false">Pending</option>
-        </Select>
+      <PageHeader
+        title="Businesses"
+        action={
+          <Link href="/admin/businesses/create">
+            <Button>
+              <Plus className="h-4 w-4" /> Add Business
+            </Button>
+          </Link>
+        }
+      />
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[180px] max-w-sm">
+          <SearchInput
+            defaultValue={filters.search ?? ''}
+            onSearch={(s) => visitAdmin('/admin/businesses', { search: s, page: 1 })}
+          />
+        </div>
+        <Select
+          className="w-36"
+          value={filters.is_active === null ? '' : String(filters.is_active)}
+          onChange={(v) => visitAdmin('/admin/businesses', { is_active: v || null, page: 1 })}
+          placeholder="All status"
+          options={[
+            { value: '', label: 'All status' },
+            { value: 'true', label: 'Active' },
+            { value: 'false', label: 'Inactive' },
+          ]}
+        />
+        <Select
+          className="w-36"
+          value={filters.is_approved === null ? '' : String(filters.is_approved)}
+          onChange={(v) => visitAdmin('/admin/businesses', { is_approved: v || null, page: 1 })}
+          placeholder="All approval"
+          options={[
+            { value: '', label: 'All approval' },
+            { value: 'true', label: 'Approved' },
+            { value: 'false', label: 'Pending' },
+          ]}
+        />
       </div>
-      <Table columns={[
-        { key: 'avatar', label: '', render: (r) => r.business_profile?.avatar_url ? <img src={r.business_profile.avatar_url} className="h-8 w-8 rounded-full" alt="" /> : null },
-        { key: 'name', label: 'Business', render: (r) => r.business_profile?.business_name ?? r.user.name },
-        { key: 'email', label: 'Email', render: (r) => r.user.email },
-        { key: 'orders', label: 'Orders', render: (r) => <span className="font-mono">{r.total_orders}</span> },
-        { key: 'revenue', label: 'Revenue', render: (r) => <span className="font-mono text-accent">{formatCurrency(r.total_revenue)}</span> },
-        { key: 'approved', label: 'Approved', render: (r) => <Badge variant={statusToBadge(r.business_profile?.is_approved ? 'approved' : 'pending')}>{r.business_profile?.is_approved ? 'Approved' : 'Pending'}</Badge> },
-        { key: 'status', label: 'Status', render: (r) => <Badge variant={statusToBadge(r.is_active ? 'active' : 'inactive')}>{formatStatusLabel(r.is_active ? 'active' : 'inactive')}</Badge> },
-        { key: 'joined', label: 'Joined', render: (r) => formatDate(String(r.created_at)) },
-        { key: 'a', label: '', render: (r) => <Link href={`/admin/businesses/${r.user.id}`}><Button size="sm" variant="ghost"><Eye className="h-4 w-4" /></Button></Link> },
-      ]} data={businesses} />
+      <Table
+        columns={[
+          {
+            key: 'avatar',
+            label: '',
+            render: (r) =>
+              r.business_profile?.avatar_url ? (
+                <img src={r.business_profile.avatar_url} className="h-8 w-8 rounded-full object-cover" alt="" />
+              ) : null,
+          },
+          { key: 'name', label: 'Business', render: (r) => r.business_profile?.business_name ?? r.user.name },
+          { key: 'email', label: 'Email', render: (r) => r.user.email },
+          { key: 'orders', label: 'Orders', render: (r) => <span className="font-mono">{r.total_orders}</span> },
+          {
+            key: 'revenue',
+            label: 'Revenue',
+            render: (r) => <span className="font-mono text-accent">{formatCurrency(r.total_revenue)}</span>,
+          },
+          {
+            key: 'approved',
+            label: 'Approved',
+            render: (r) => (
+              <Badge variant={statusToBadge(r.business_profile?.is_approved ? 'approved' : 'pending')}>
+                {r.business_profile?.is_approved ? 'Approved' : 'Pending'}
+              </Badge>
+            ),
+          },
+          {
+            key: 'status',
+            label: 'Status',
+            render: (r) => (
+              <Badge variant={statusToBadge(r.is_active ? 'active' : 'inactive')}>
+                {formatStatusLabel(r.is_active ? 'active' : 'inactive')}
+              </Badge>
+            ),
+          },
+          { key: 'joined', label: 'Joined', render: (r) => formatDate(String(r.created_at)) },
+          {
+            key: 'a',
+            label: '',
+            render: (r) => (
+              <Link href={`/admin/businesses/${r.user.id}`}>
+                <Button size="sm" variant="ghost">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </Link>
+            ),
+          },
+        ]}
+        data={businesses}
+      />
       <Pagination meta={meta} />
     </>
   )

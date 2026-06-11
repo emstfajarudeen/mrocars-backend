@@ -77,11 +77,17 @@ export default function OrderDetail({ order }: Props) {
         action={
           <div className="flex items-center gap-2">
             <Badge variant={statusToBadge(order.status)}>{formatStatusLabel(order.status)}</Badge>
-            <Select className="w-36" value={status} onChange={(e) => setStatus(e.target.value)}>
-              {['new', 'pending', 'delivered', 'cancelled'].map((s) => (
-                <option key={s} value={s}>{formatStatusLabel(s)}</option>
-              ))}
-            </Select>
+            <Select
+              className="w-36"
+              value={status}
+              onChange={(v) => setStatus(v)}
+              options={[
+                { value: 'new', label: 'New' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'delivered', label: 'Delivered' },
+                { value: 'cancelled', label: 'Cancelled' },
+              ]}
+            />
             <Button size="sm" onClick={updateStatus}>Update</Button>
           </div>
         }
