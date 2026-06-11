@@ -418,7 +418,9 @@ export default class RequestController {
       )
         .orderBy('createdAt', 'asc')
         .preload('businessUser', (businessQuery) => {
-          businessQuery.preload('businessProfile')
+          businessQuery.preload('businessProfile', (profileQuery) => {
+            profileQuery.preload('governorate').preload('area')
+          })
         })
 
       if (governorateId || areaId) {
@@ -435,10 +437,39 @@ export default class RequestController {
         })
       }
 
-      const responses = await responsesQuery
+      const items = await responsesQuery
 
       const data = await Promise.all(
-        responses.map((item) => enrichResponseWithRating(item, true, user.language))
+        items.map(async (item) => {
+          const rating = await getBusinessRating(item.businessUserId)
+          const businessProfile = item.businessUser?.businessProfile
+          return {
+            response_id: item.id,
+            price: item.price,
+            description: item.notes,
+            attachment_urls: (item.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
+            offer_validity_type: item.offerValidityType,
+            offer_valid_until: item.offerValidUntil?.toISO() ?? item.offerValidUntil ?? null,
+            business: businessProfile ? {
+              id: item.businessUserId,
+              name: businessProfile.businessName,
+              avatar: businessProfile.avatar ? publicUrl(businessProfile.avatar) : null,
+              rating: rating.rating_avg,
+              address: {
+                governorate: businessProfile.governorate ? (user.language === 'ar' ? businessProfile.governorate.nameAr : businessProfile.governorate.nameEn) : null,
+                area: businessProfile.area ? (user.language === 'ar' ? businessProfile.area.nameAr : businessProfile.area.nameEn) : null,
+                block: businessProfile.block,
+                street: businessProfile.street,
+                building_name: businessProfile.buildingName,
+                building_no: businessProfile.buildingNo,
+                floor_no: businessProfile.floorNo,
+                shop_no: businessProfile.shopNo,
+                latitude: businessProfile.latitude,
+                longitude: businessProfile.longitude,
+              },
+            } : null,
+          }
+        })
       )
 
       return ApiResponse.success(response, { responses: data })
@@ -460,7 +491,9 @@ export default class RequestController {
         .where('id', params.responseId)
         .where('requestId', serviceRequest.id)
         .preload('businessUser', (businessQuery) => {
-          businessQuery.preload('businessProfile')
+          businessQuery.preload('businessProfile', (profileQuery) => {
+            profileQuery.preload('governorate').preload('area')
+          })
         })
         .first()
 
@@ -468,9 +501,36 @@ export default class RequestController {
         return ApiResponse.error(response, 'Response not found', undefined, 404)
       }
 
-      const serialized = await enrichResponseWithRating(requestResponse, true, user.language)
+      const businessProfile = requestResponse.businessUser?.businessProfile
 
-      return ApiResponse.success(response, { response: serialized })
+      return ApiResponse.success(response, {
+        response: {
+          response_id: requestResponse.id,
+          request_id: requestResponse.requestId,
+          price: requestResponse.price,
+          description: requestResponse.notes,
+          attachment_urls: (requestResponse.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
+          business: businessProfile ? {
+            id: requestResponse.businessUserId,
+            name: businessProfile.businessName,
+            avatar: businessProfile.avatar ? publicUrl(businessProfile.avatar) : null,
+            mobile_code: businessProfile.phoneCode,
+            mobile_number: businessProfile.phoneNumber,
+            address: {
+              governorate: businessProfile.governorate ? (user.language === 'ar' ? businessProfile.governorate.nameAr : businessProfile.governorate.nameEn) : null,
+              area: businessProfile.area ? (user.language === 'ar' ? businessProfile.area.nameAr : businessProfile.area.nameEn) : null,
+              block: businessProfile.block,
+              street: businessProfile.street,
+              building_name: businessProfile.buildingName,
+              building_no: businessProfile.buildingNo,
+              floor_no: businessProfile.floorNo,
+              shop_no: businessProfile.shopNo,
+              latitude: businessProfile.latitude,
+              longitude: businessProfile.longitude,
+            },
+          } : null,
+        },
+      })
     } catch {
       return ApiResponse.error(response, 'Unauthorized', undefined, 401)
     }
