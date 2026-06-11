@@ -3,7 +3,7 @@ import vine from '@vinejs/vine'
 export const governorateValidator = vine.compile(
   vine.object({
     name_en: vine.string(),
-    name_ar: vine.string(),
+    name_ar: vine.string().optional(),
     is_active: vine.boolean().optional(),
   })
 )
@@ -12,7 +12,7 @@ export const areaValidator = vine.compile(
   vine.object({
     governorate_id: vine.number().exists({ table: 'governorates', column: 'id' }),
     name_en: vine.string(),
-    name_ar: vine.string(),
+    name_ar: vine.string().optional(),
     is_active: vine.boolean().optional(),
   })
 )
@@ -35,7 +35,7 @@ export const carModelValidator = vine.compile(
 export const categoryValidator = vine.compile(
   vine.object({
     name_en: vine.string(),
-    name_ar: vine.string(),
+    name_ar: vine.string().optional(),
     description_en: vine.string().optional(),
     description_ar: vine.string().optional(),
     sort_order: vine.number().optional(),

@@ -43,9 +43,9 @@ export default class BannerController {
 
       const banner = await Banner.create({
         titleEn: payload.title_en,
-        titleAr: payload.title_ar,
+        titleAr: payload.title_ar || payload.title_en,
         descriptionEn: payload.description_en ?? null,
-        descriptionAr: payload.description_ar ?? null,
+        descriptionAr: payload.description_ar ?? payload.description_en ?? null,
         image: await storeFile(image!, 'banners'),
         sortOrder: payload.sort_order ?? 0,
         isActive: payload.is_active ?? true,
@@ -90,9 +90,9 @@ export default class BannerController {
       }
 
       banner.titleEn = payload.title_en
-      banner.titleAr = payload.title_ar
+      banner.titleAr = payload.title_ar || payload.title_en
       banner.descriptionEn = payload.description_en ?? null
-      banner.descriptionAr = payload.description_ar ?? null
+      banner.descriptionAr = payload.description_ar ?? payload.description_en ?? null
       if (payload.sort_order !== undefined) banner.sortOrder = payload.sort_order
       if (payload.is_active !== undefined) banner.isActive = payload.is_active
 

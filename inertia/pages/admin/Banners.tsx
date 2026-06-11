@@ -77,15 +77,15 @@ function TextArea({
       <textarea
         className={cn(
           'w-full rounded-lg border bg-bg-secondary px-3 py-2 text-sm text-text-primary placeholder:text-text-muted transition-colors',
-          'focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent',
-          'disabled:cursor-not-allowed disabled:opacity-50',
+          'focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent focus:ring-offset-bg-primary',
+          'disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px] resize-none',
           error ? 'border-danger focus:border-danger focus:ring-danger' : 'border-border',
           className
         )}
         {...props}
       />
       {error ? (
-        <p className="text-sm text-danger" role="alert">
+        <p className="text-xs text-danger font-medium" role="alert">
           {error}
         </p>
       ) : null}
@@ -146,14 +146,11 @@ export default function Banners({ banners, meta, filters }: Props) {
 
   const validateForm = () => {
     const newErrors: Record<string, string[]> = {}
-    
+
     if (!form.title_en.trim()) {
       newErrors.title_en = ['Title (EN) is required']
     }
-    if (!form.title_ar.trim()) {
-      newErrors.title_ar = ['Title (AR) is required']
-    }
-    
+
     if (form.sort_order && isNaN(Number(form.sort_order))) {
       newErrors.sort_order = ['Sort order must be a number']
     }
@@ -174,12 +171,10 @@ export default function Banners({ banners, meta, filters }: Props) {
       setErrors(frontendErrors)
       setLoading(false)
       toast.error('Validation failed', 'Please check the marked fields')
-      
+
       // Auto-switch to the tab with errors
       if (frontendErrors.title_en) {
         setLang('en')
-      } else if (frontendErrors.title_ar) {
-        setLang('ar')
       }
       return
     }
@@ -187,9 +182,9 @@ export default function Banners({ banners, meta, filters }: Props) {
     try {
       const fd = new FormData()
       fd.append('title_en', form.title_en)
-      fd.append('title_ar', form.title_ar)
+      fd.append('title_ar', form.title_ar.trim() ? form.title_ar : form.title_en)
       fd.append('description_en', form.description_en)
-      fd.append('description_ar', form.description_ar)
+      fd.append('description_ar', form.description_ar.trim() ? form.description_ar : form.description_en)
       fd.append('sort_order', form.sort_order)
       fd.append('is_active', String(form.is_active))
       if (image) fd.append('image', image)
@@ -208,7 +203,7 @@ export default function Banners({ banners, meta, filters }: Props) {
       if (apiErr.errors) {
         setErrors(apiErr.errors)
         toast.error('Validation failed', 'Please check the marked fields')
-        
+
         // Auto-switch to the tab with errors
         if (apiErr.errors.title_en || apiErr.errors.description_en) {
           setLang('en')
@@ -340,112 +335,111 @@ export default function Banners({ banners, meta, filters }: Props) {
       />
       <Pagination meta={meta} />
 
-      <Modal open={open} onOpenChange={setOpen} title={editing ? 'Edit Banner' : 'Add Banner'}>
-        <div className="space-y-4">
-          <div className="mb-4 flex w-fit items-center gap-1 rounded-xl bg-[#1a1c23] p-1">
-            <button
-              type="button"
-              onClick={() => setLang('en')}
-              className={`relative rounded-lg px-6 py-2 text-sm font-medium transition-colors ${
-                lang === 'en'
-                  ? 'bg-[#10301e] text-[#22c55e]'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              EN
-              {(errors.title_en || errors.description_en) && (
-                <span className="absolute top-1 right-2 flex h-1.5 w-1.5 rounded-full bg-red-500" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setLang('ar')}
-              className={`relative rounded-lg px-6 py-2 text-sm font-medium transition-colors ${
-                lang === 'ar'
-                  ? 'bg-[#10301e] text-[#22c55e]'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              AR
-              {(errors.title_ar || errors.description_ar) && (
-                <span className="absolute top-1 right-2 flex h-1.5 w-1.5 rounded-full bg-red-500" />
-              )}
-            </button>
+      <Modal
+        open={open}
+        onOpenChange={setOpen}
+        title={editing ? 'Edit Banner' : 'Add Banner'}
+        className="max-w-[760px]"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-2">
+          {/* Left Column: Form Details (7/12 cols) */}
+          <div className="md:col-span-7 space-y-4 md:border-r md:border-border md:pr-6">
+            <div className="flex w-full items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-1.5 rounded-lg bg-bg-secondary p-1 border border-border">
+                <button
+                  type="button"
+                  onClick={() => setLang('en')}
+                  className={cn(
+                    'relative rounded-md px-4 py-1.5 text-xs font-semibold transition-all duration-200',
+                    lang === 'en'
+                      ? 'bg-bg-card text-accent shadow-sm border border-border'
+                      : 'text-text-muted hover:text-text-primary'
+                  )}
+                >
+                  English
+                  {(errors.title_en || errors.description_en) && (
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-danger animate-pulse" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLang('ar')}
+                  className={cn(
+                    'relative rounded-md px-4 py-1.5 text-xs font-semibold transition-all duration-200',
+                    lang === 'ar'
+                      ? 'bg-bg-card text-accent shadow-sm border border-border'
+                      : 'text-text-muted hover:text-text-primary'
+                  )}
+                >
+                  العربية (Arabic)
+                  {(errors.title_ar || errors.description_ar) && (
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-danger animate-pulse" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {lang === 'en' ? (
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-text-secondary">
+                    Title (EN) <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <Input
+                    error={errors.title_en?.join(', ')}
+                    value={form.title_en}
+                    onChange={(e) => setForm({ ...form, title_en: e.target.value })}
+                    placeholder="Enter English Title"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-text-secondary">Description (EN)</label>
+                  <TextArea
+                    error={errors.description_en?.join(', ')}
+                    value={form.description_en}
+                    onChange={(e) => setForm({ ...form, description_en: e.target.value })}
+                    placeholder="Enter English Description"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-text-secondary">
+                    Title (AR)
+                  </label>
+                  <Input
+                    error={errors.title_ar?.join(', ')}
+                    value={form.title_ar}
+                    onChange={(e) => setForm({ ...form, title_ar: e.target.value })}
+                    placeholder="Enter Arabic Title"
+                    dir="rtl"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-text-secondary">Description (AR)</label>
+                  <TextArea
+                    error={errors.description_ar?.join(', ')}
+                    value={form.description_ar}
+                    onChange={(e) => setForm({ ...form, description_ar: e.target.value })}
+                    placeholder="Enter Arabic Description"
+                    rows={3}
+                    dir="rtl"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          {lang === 'en' ? (
-            <>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm text-gray-300">
-                  Title (EN) <span className="text-red-500 font-bold">*</span>
-                </label>
-                <Input
-                  error={errors.title_en?.join(', ')}
-                  value={form.title_en}
-                  onChange={(e) => setForm({ ...form, title_en: e.target.value })}
-                  placeholder="Enter English Title"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm text-gray-300">Description (EN)</label>
-                <TextArea
-                  error={errors.description_en?.join(', ')}
-                  value={form.description_en}
-                  onChange={(e) => setForm({ ...form, description_en: e.target.value })}
-                  placeholder="Enter English Description"
-                  rows={3}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm text-gray-300">
-                  Title (AR) <span className="text-red-500 font-bold">*</span>
-                </label>
-                <Input
-                  error={errors.title_ar?.join(', ')}
-                  value={form.title_ar}
-                  onChange={(e) => setForm({ ...form, title_ar: e.target.value })}
-                  placeholder="Enter Arabic Title"
-                  dir="rtl"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm text-gray-300">Description (AR)</label>
-                <TextArea
-                  error={errors.description_ar?.join(', ')}
-                  value={form.description_ar}
-                  onChange={(e) => setForm({ ...form, description_ar: e.target.value })}
-                  placeholder="Enter Arabic Description"
-                  rows={3}
-                  dir="rtl"
-                />
-              </div>
-            </>
-          )}
+          {/* Right Column: Settings & Upload (5/12 cols) */}
+          <div className="md:col-span-5 space-y-5">
+            {/* Dropzone Card */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-text-secondary">
+                Image {!editing && <span className="text-red-500 font-bold">*</span>}
+              </label>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-gray-300">Sort Order</label>
-            <Input
-              error={errors.sort_order?.join(', ')}
-              type="number"
-              value={form.sort_order}
-              onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-gray-300">
-              {editing ? (
-                'Image (optional)'
-              ) : (
-                <>
-                  Image <span className="text-red-500 font-bold">*</span>
-                </>
-              )}
-            </label>
-            <div>
               <input
                 type="file"
                 id="banner-image-upload"
@@ -465,65 +459,95 @@ export default function Banners({ banners, meta, filters }: Props) {
                   }
                 }}
               />
-              <Button
-                variant={errors.image ? 'danger' : 'outline'}
-                onClick={() => document.getElementById('banner-image-upload')?.click()}
-                className="flex items-center gap-2"
-              >
-                <UploadIcon className="h-4 w-4" />
-                Click to Upload
-              </Button>
-            </div>
-            {errors.image && (
-              <span className="text-xs text-danger mt-1.5 block">{errors.image.join(', ')}</span>
-            )}
 
-            {previewUrl && (
-              <div className="relative mt-2 w-full max-w-[240px] rounded-lg overflow-hidden border border-gray-700 bg-gray-900 group">
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="w-full aspect-[16/9] object-cover"
-                />
-                {image && (
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImage(null)
-                        setPreviewUrl(editing?.image_url || null)
-                      }}
-                      className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors"
-                      title="Remove image"
+              {previewUrl ? (
+                <div className="relative aspect-[16/9] w-full rounded-lg overflow-hidden border border-border bg-bg-secondary group">
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {/* Overlay glassmorphic bar on hover */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-bg-card/85 border-border hover:bg-bg-card text-text-primary"
+                      onClick={() => document.getElementById('banner-image-upload')?.click()}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      Replace
+                    </Button>
+                    {image && (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => {
+                          setImage(null)
+                          setPreviewUrl(editing?.image_url || null)
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => document.getElementById('banner-image-upload')?.click()}
+                  className={cn(
+                    'flex flex-col items-center justify-center aspect-[16/9] w-full rounded-lg border-2 border-dashed border-border bg-bg-secondary hover:bg-bg-hover hover:border-accent cursor-pointer transition-all duration-200 group p-4',
+                    errors.image && 'border-danger hover:border-danger bg-danger/5'
+                  )}
+                >
+                  <div className="rounded-full bg-bg-card p-3 border border-border group-hover:scale-110 transition-transform duration-200 shadow-sm">
+                    <UploadIcon className={cn('h-6 w-6 text-text-muted group-hover:text-accent', errors.image && 'text-danger')} />
+                  </div>
+                  <p className="mt-3 text-xs font-semibold text-text-primary">Click to upload banner image</p>
+                  <p className="mt-1 text-[10px] text-text-muted">Supports PNG, JPG or WEBP</p>
+                </div>
+              )}
 
-          <div className="pt-2">
-            <label className="flex w-fit items-center gap-2.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                className="h-4.5 w-4.5 rounded border-border bg-bg-secondary text-accent focus:ring-accent focus:ring-offset-bg-primary transition-all cursor-pointer"
-                checked={form.is_active}
-                onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+              {errors.image && (
+                <span className="text-xs text-danger mt-1 block font-medium">{errors.image.join(', ')}</span>
+              )}
+            </div>
+
+            {/* Sort Order Input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-text-secondary">Sort Order</label>
+              <Input
+                error={errors.sort_order?.join(', ')}
+                type="number"
+                value={form.sort_order}
+                onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
+                placeholder="0"
+                min="0"
+                className="max-w-[120px]"
               />
-              <span className="text-sm text-gray-300 font-medium">Active</span>
-            </label>
-          </div>
+            </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={submit} loading={loading}>
-              Save
-            </Button>
+            {/* Active Status Switch */}
+            <div className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary/40 p-3">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium text-text-primary">Status</span>
+                <span className="text-[11px] text-text-muted">Show this banner on app home</span>
+              </div>
+              <Switch
+                checked={form.is_active}
+                onChange={(checked) => setForm({ ...form, is_active: checked })}
+              />
+            </div>
           </div>
+        </div>
+
+        {/* Modal Footer actions */}
+        <div className="flex justify-end gap-3 border-t border-border pt-4 mt-6">
+          <Button variant="ghost" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={submit} loading={loading} className="px-6">
+            Save Changes
+          </Button>
         </div>
       </Modal>
 

@@ -42,7 +42,7 @@ export default class AreaController {
       const area = await Area.create({
         governorateId: payload.governorate_id,
         nameEn: payload.name_en,
-        nameAr: payload.name_ar,
+        nameAr: payload.name_ar || payload.name_en,
         isActive: payload.is_active ?? true,
       })
 
@@ -80,7 +80,7 @@ export default class AreaController {
       const payload = await request.validateUsing(areaValidator)
       area.governorateId = payload.governorate_id
       area.nameEn = payload.name_en
-      area.nameAr = payload.name_ar
+      area.nameAr = payload.name_ar || payload.name_en
       if (payload.is_active !== undefined) area.isActive = payload.is_active
       await area.save()
       await area.load('governorate')

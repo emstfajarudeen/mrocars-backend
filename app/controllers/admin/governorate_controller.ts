@@ -39,7 +39,7 @@ export default class GovernorateController {
       const payload = await request.validateUsing(governorateValidator)
       const governorate = await Governorate.create({
         nameEn: payload.name_en,
-        nameAr: payload.name_ar,
+        nameAr: payload.name_ar || payload.name_en,
         isActive: payload.is_active ?? true,
       })
 
@@ -82,7 +82,7 @@ export default class GovernorateController {
 
       const payload = await request.validateUsing(governorateValidator)
       governorate.nameEn = payload.name_en
-      governorate.nameAr = payload.name_ar
+      governorate.nameAr = payload.name_ar || payload.name_en
       if (payload.is_active !== undefined) governorate.isActive = payload.is_active
       await governorate.save()
 

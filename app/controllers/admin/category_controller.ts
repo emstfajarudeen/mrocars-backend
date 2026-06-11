@@ -53,9 +53,9 @@ export default class CategoryController {
 
       const category = await Category.create({
         nameEn: payload.name_en,
-        nameAr: payload.name_ar,
+        nameAr: payload.name_ar || payload.name_en,
         descriptionEn: payload.description_en ?? null,
-        descriptionAr: payload.description_ar ?? null,
+        descriptionAr: payload.description_ar ?? payload.description_en ?? null,
         sortOrder: payload.sort_order ?? 0,
         isActive: payload.is_active ?? true,
         image: imagePath,
@@ -103,9 +103,9 @@ export default class CategoryController {
       }
 
       category.nameEn = payload.name_en
-      category.nameAr = payload.name_ar
+      category.nameAr = payload.name_ar || payload.name_en
       category.descriptionEn = payload.description_en ?? null
-      category.descriptionAr = payload.description_ar ?? null
+      category.descriptionAr = payload.description_ar ?? payload.description_en ?? null
       if (payload.sort_order !== undefined) category.sortOrder = payload.sort_order
       if (payload.is_active !== undefined) category.isActive = payload.is_active
 
