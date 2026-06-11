@@ -21,7 +21,7 @@ type Props = {
       email: string
       phone_code: string
       phone_number: string
-      is_approved: boolean
+      isApproved: boolean | number
       governorate: { nameEn: string } | null
       area: { nameEn: string } | null
       block: string | null
@@ -76,10 +76,15 @@ export default function BusinessDetail({ business, recent_orders, recent_request
       <PageHeader
         title={bp?.business_name ?? business.user.name}
         action={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={async () => { await apiMutate('PUT', `/businesses/${business.user.id}/toggle-status`, {}); reloadPage() }}>Toggle Status</Button>
-            <Button variant="outline" onClick={async () => { await apiMutate('PUT', `/businesses/${business.user.id}/toggle-approval`, {}); reloadPage() }}>Toggle Approval</Button>
-            <Button variant="danger" onClick={() => setConfirmDelete(true)}><Trash2 className="h-4 w-4" /></Button>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <span>Status</span>
+              <Switch checked={business.user.isActive} onChange={async () => { await apiMutate('PUT', `/businesses/${business.user.id}/toggle-status`, {}); reloadPage() }} />
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <span>Approval</span>
+              <Switch checked={!!bp?.isApproved} onChange={async () => { await apiMutate('PUT', `/businesses/${business.user.id}/toggle-approval`, {}); reloadPage() }} />
+            </label>
           </div>
         }
       />
@@ -100,7 +105,7 @@ export default function BusinessDetail({ business, recent_orders, recent_request
               {bp?.governorate ? <p>{bp.governorate.nameEn}, {bp.area?.nameEn} — {bp.block}, {bp.street}</p> : null}
               <div className="flex gap-2">
                 <Badge variant={statusToBadge(business.user.isActive ? 'active' : 'inactive')}>{formatStatusLabel(business.user.isActive ? 'active' : 'inactive')}</Badge>
-                <Badge variant={statusToBadge(bp?.is_approved ? 'approved' : 'pending')}>{bp?.is_approved ? 'Approved' : 'Pending Approval'}</Badge>
+                <Badge variant={statusToBadge(bp?.isApproved ? 'approved' : 'pending')}>{bp?.isApproved ? 'Approved' : 'Pending Approval'}</Badge>
               </div>
             </div>
           </div>
@@ -144,6 +149,21 @@ export default function BusinessDetail({ business, recent_orders, recent_request
           )}
         </Card>
       </div>
+
+      <div className="mb-6">
+        <Card title="Danger Zone" className="border-red-200">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h4 className="font-medium text-red-600">Delete this business</h4>
+              <p className="text-sm text-text-secondary">Once you delete a business, there is no going back. Please be certain.</p>
+            </div>
+            <Button variant="danger" onClick={() => setConfirmDelete(true)}>
+              <Trash2 className="h-4 w-4" /> Delete Business
+            </Button>
+          </div>
+        </Card>
+      </div>
+
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
@@ -156,5 +176,39 @@ export default function BusinessDetail({ business, recent_orders, recent_request
         variant="danger"
       />
     </>
+  )
+}
+
+function Switch({
+  checked,
+  onChange,
+  disabled = false,
+}: {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        'relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+        checked ? 'bg-primary border-primary' : 'bg-accent/30 border-border shadow-sm',
+        disabled && 'cursor-not-allowed opacity-50'
+      )}
+    >
+      <span className="sr-only">Use setting</span>
+      <span
+        aria-hidden="true"
+        className={cn(
+          'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+          checked ? 'translate-x-2' : '-translate-x-2'
+        )}
+      />
+    </button>
   )
 }
