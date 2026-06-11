@@ -157,7 +157,10 @@ export default class HomeController {
       ])
 
       const requestStatusCounts = buildStatusCounts(
-        requestStatusRows as any as { status: string; count: number | string }[],
+        (requestStatusRows as any[]).map((row) => ({
+          status: row.status,
+          count: row.$extras?.count ?? row.count,
+        })),
         REQUEST_STATUSES
       )
       const orderStatusCounts = buildStatusCounts(
@@ -181,11 +184,31 @@ export default class HomeController {
         },
         request_status_counts: requestStatusCounts,
         order_status_counts: orderStatusCounts,
-        recent_requests: recentRequests.map((item) => serializeRequest(item)),
-        recent_orders: recentOrders.map((order) => ({
-          ...serializeOrder(order, { language: business.language }),
-          user: order.user ? serializeUserWithPhone(order.user) : null,
+        recent_requests: recentRequests.map((item) => ({
+          user_name: item.user?.name || null,
+          category: item.category ? (business.language === 'ar' ? item.category.nameAr : item.category.nameEn) : null,
+          request_no: item.requestNo,
+          vehicle: item.userVehicle && item.userVehicle.carBrand && item.userVehicle.carModel
+            ? `${item.userVehicle.carBrand.name} ${item.userVehicle.carModel.name}`
+            : null,
+          status: item.status,
+          submitted: item.createdAt?.toISO() ?? null,
         })),
+        recent_orders: recentOrders.map((order) => {
+          const vehicle = order.request?.userVehicle
+          const vehicleStr = vehicle && vehicle.carBrand && vehicle.carModel
+            ? `${vehicle.carBrand.name} ${vehicle.carModel.name} ${vehicle.year || ''}`.trim()
+            : null
+
+          return {
+            order_no: order.orderNo,
+            user_name: order.user?.name || null,
+            status: order.status,
+            title: order.request?.title || null,
+            vehicle: vehicleStr,
+            total_amount: order.totalAmount,
+          }
+        }),
         counts: {
           new_requests_count: requestStatusCounts.new ?? 0,
           new_orders_count: orderStatusCounts.new ?? 0,

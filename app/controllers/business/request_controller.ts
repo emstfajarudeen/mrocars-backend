@@ -111,7 +111,23 @@ export default class RequestController {
       const data = paginated.all().map((item) => {
         const mine = myResponses.find((row) => row.requestId === item.id)
         const hasResponded = mine !== undefined && !isRejectionMarker(mine)
-        return serializeRequest(item, { hasResponded })
+        return {
+          request_no: item.requestNo,
+          user_name: item.user?.name || null,
+          title: item.title,
+          category: item.category ? (business.language === 'ar' ? item.category.nameAr : item.category.nameEn) : null,
+          spare_part_type: item.sparePartType,
+          no_of_tyres: item.noOfTyres,
+          vehicle: item.userVehicle ? {
+            brand: item.userVehicle.carBrand?.name || null,
+            model: item.userVehicle.carModel?.name || null,
+            year: item.userVehicle.year || null,
+          } : null,
+          description: item.description,
+          submitted: item.createdAt?.toISO() ?? null,
+          status: item.status,
+          has_responded: hasResponded,
+        }
       })
 
       return ApiResponse.success(response, {
@@ -146,8 +162,35 @@ export default class RequestController {
         .where('businessUserId', business.id)
         .first()
 
+      const serializedReq = serializeRequest(serviceRequest)
+
       return ApiResponse.success(response, {
-        request: serializeRequest(serviceRequest),
+        request: {
+          request_no: serviceRequest.requestNo,
+          user_name: serviceRequest.user?.name || null,
+          submitted: serviceRequest.createdAt?.toISO() ?? null,
+          status: serviceRequest.status,
+          category: serviceRequest.category ? (business.language === 'ar' ? serviceRequest.category.nameAr : serviceRequest.category.nameEn) : null,
+          vehicle: serviceRequest.userVehicle ? {
+            brand: serviceRequest.userVehicle.carBrand?.name || null,
+            model: serviceRequest.userVehicle.carModel?.name || null,
+            year: serviceRequest.userVehicle.year || null,
+          } : null,
+          title: serviceRequest.title,
+          description: serviceRequest.description,
+          no_of_tyres: serviceRequest.noOfTyres,
+          when_needed: serviceRequest.whenNeeded,
+          scheduled_date: serviceRequest.scheduledDate?.toISODate() ?? null,
+          scheduled_time: serviceRequest.scheduledTime,
+          pickup_location_name: serviceRequest.pickupLocationName,
+          pickup_latitude: serviceRequest.pickupLatitude,
+          pickup_longitude: serviceRequest.pickupLongitude,
+          delivery_location_name: serviceRequest.deliveryLocationName,
+          delivery_latitude: serviceRequest.deliveryLatitude,
+          delivery_longitude: serviceRequest.deliveryLongitude,
+          photos: serializedReq.attachments?.map((a) => a.file_url) || [],
+          voice_note_url: serializedReq.voice_note_url,
+        },
         my_response:
           myResponse && !isRejectionMarker(myResponse)
             ? serializeRequestResponse(myResponse)

@@ -21,8 +21,9 @@ import {
   isGuestUser,
   resolveCategoryId,
   serializeRequest,
+  getBusinessRating,
 } from '#helpers/request_helper'
-import { storeFile, validateFile } from '#helpers/upload'
+import { storeFile, validateFile, publicUrl } from '#helpers/upload'
 import { createRequestValidator } from '#validators/user/request_validator'
 import NotificationService, { NotificationType } from '#services/notification_service'
 import Order from '#models/order'
@@ -276,7 +277,9 @@ export default class RequestController {
           applyRealOffersFilter(responsesQuery)
             .orderBy('createdAt', 'asc')
             .preload('businessUser', (businessQuery) => {
-              businessQuery.preload('businessProfile')
+              businessQuery.preload('businessProfile', (profileQuery) => {
+                profileQuery.preload('governorate').preload('area')
+              })
             })
 
           if (governorateId || areaId) {
@@ -300,12 +303,55 @@ export default class RequestController {
       }
 
       const responses = await Promise.all(
-        serviceRequest.responses.map((item) => enrichResponseWithRating(item, true, user.language))
+        serviceRequest.responses.map(async (item) => {
+          const rating = await getBusinessRating(item.businessUserId)
+          const businessProfile = item.businessUser?.businessProfile
+          return {
+            response_id: item.id,
+            price: item.price,
+            description: item.notes,
+            attachment: item.attachment ? publicUrl(item.attachment) : null,
+            offer_validity_type: item.offerValidityType,
+            offer_valid_until: item.offerValidUntil?.toISO() ?? item.offerValidUntil ?? null,
+            business: businessProfile ? {
+              id: item.businessUserId,
+              name: businessProfile.businessName,
+              avatar: businessProfile.avatar ? publicUrl(businessProfile.avatar) : null,
+              rating: rating.rating_avg,
+              address: {
+                governorate: businessProfile.governorate ? (user.language === 'ar' ? businessProfile.governorate.nameAr : businessProfile.governorate.nameEn) : null,
+                area: businessProfile.area ? (user.language === 'ar' ? businessProfile.area.nameAr : businessProfile.area.nameEn) : null,
+                block: businessProfile.block,
+                street: businessProfile.street,
+                building_name: businessProfile.buildingName,
+                building_no: businessProfile.buildingNo,
+                floor_no: businessProfile.floorNo,
+                shop_no: businessProfile.shopNo,
+                latitude: businessProfile.latitude,
+                longitude: businessProfile.longitude,
+              }
+            } : null,
+          }
+        })
       )
+
+      const serializedReq = serializeRequest(serviceRequest)
 
       return ApiResponse.success(response, {
         request: {
-          ...serializeRequest(serviceRequest),
+          request_no: serviceRequest.requestNo,
+          title: serviceRequest.title,
+          category: serviceRequest.category ? (user.language === 'ar' ? serviceRequest.category.nameAr : serviceRequest.category.nameEn) : null,
+          spare_part_type: serviceRequest.sparePartType,
+          no_of_tyres: serviceRequest.noOfTyres,
+          vehicle: serviceRequest.userVehicle ? {
+            brand: serviceRequest.userVehicle.carBrand?.name || null,
+            model: serviceRequest.userVehicle.carModel?.name || null,
+            year: serviceRequest.userVehicle.year || null,
+          } : null,
+          description: serviceRequest.description,
+          photos: serializedReq.attachments?.map((a) => a.file_url) || [],
+          voice_note_url: serializedReq.voice_note_url,
           responses,
         },
       })
