@@ -30,6 +30,9 @@ export default class BusinessProfile extends compose(BaseModel, SoftDeletes) {
   declare avatar: string | null
 
   @column()
+  declare addressLabel: string | null
+
+  @column()
   declare governorateId: number | null
 
   @column()
@@ -80,9 +83,9 @@ export default class BusinessProfile extends compose(BaseModel, SoftDeletes) {
   @belongsTo(() => User)
   declare user: BelongsTo<typeof User>
 
-  @belongsTo(() => Governorate)
+  @belongsTo(() => Governorate, { serializeAs: null })
   declare governorate: BelongsTo<typeof Governorate>
 
-  @belongsTo(() => Area)
+  @belongsTo(() => Area, { serializeAs: null })
   declare area: BelongsTo<typeof Area>
 }

@@ -12,6 +12,7 @@ export const updateProfileValidator = vine.compile(
 
 export const businessAddressValidator = vine.compile(
   vine.object({
+    address_label: vine.string().optional(),
     governorate_id: vine.number().optional(),
     area_id: vine.number().optional(),
     block: vine.string().optional(),

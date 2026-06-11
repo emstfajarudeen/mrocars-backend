@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import UserAddress from '#models/user_address'
 import { ApiResponse } from '#helpers/response'
+import { serializeDeliveryAddress } from '#helpers/request_helper'
 import { createAddressValidator, updateAddressValidator } from '#validators/user/address_validator'
 
 function isValidationError(error: unknown): boolean {
@@ -52,7 +53,7 @@ export default class AddressController {
         .preload('area')
 
       return ApiResponse.success(response, {
-        addresses: addresses.map((address) => address.serialize()),
+        addresses: addresses.map((address) => serializeDeliveryAddress(address, user.language)),
       })
     } catch {
       return ApiResponse.error(response, 'Unauthorized', undefined, 401)
@@ -90,7 +91,7 @@ export default class AddressController {
 
       return ApiResponse.success(
         response,
-        { address: address.serialize(), message: 'Address added successfully' },
+        { address: serializeDeliveryAddress(address, user.language), message: 'Address added successfully' },
         'Address added successfully'
       )
     } catch (error) {
@@ -113,7 +114,7 @@ export default class AddressController {
         return ApiResponse.error(response, 'Address not found', undefined, 404)
       }
 
-      return ApiResponse.success(response, { address: address.serialize() })
+      return ApiResponse.success(response, { address: serializeDeliveryAddress(address, user.language) })
     } catch {
       return ApiResponse.error(response, 'Unauthorized', undefined, 401)
     }
@@ -136,7 +137,7 @@ export default class AddressController {
 
       return ApiResponse.success(
         response,
-        { address: address.serialize(), message: 'Address updated successfully' },
+        { address: serializeDeliveryAddress(address, user.language), message: 'Address updated successfully' },
         'Address updated successfully'
       )
     } catch (error) {

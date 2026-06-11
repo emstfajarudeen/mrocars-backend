@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import hash from '@adonisjs/core/services/hash'
 import { ApiResponse } from '#helpers/response'
+import { serializeBusinessProfile } from '#helpers/request_helper'
 import AuthService from '#services/auth_service'
 import {
   loginValidator,
@@ -29,14 +30,18 @@ export default class AuthController {
         return ApiResponse.error(response, 'Invalid credentials', undefined, 401)
       }
 
-      await user.load('businessProfile')
+      await user.load('businessProfile', (query) => {
+        query.preload('governorate').preload('area')
+      })
       const tokens = await AuthService.generateTokens(user, auth)
 
       return ApiResponse.success(
         response,
         {
           user: user.serialize(),
-          business_profile: user.businessProfile?.serialize() ?? null,
+          business_profile: user.businessProfile
+            ? serializeBusinessProfile(user.businessProfile, user.language)
+            : null,
           ...tokens,
         },
         'Logged in successfully'

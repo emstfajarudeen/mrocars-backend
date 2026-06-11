@@ -11,6 +11,7 @@ import Order from '#models/order'
 import OrderAdditionalWork from '#models/order_additional_work'
 import UserAddress from '#models/user_address'
 import type { OrderStatus } from '#types/order'
+import type { UserLanguage } from '#types/user'
 import { publicUrl } from '#helpers/upload'
 import { serializeCarBrand, serializeCategory } from '#helpers/masters'
 
@@ -162,11 +163,22 @@ export function serializeRequest(
   }
 }
 
+export function serializeBusinessProfile(profile: BusinessProfile, language: UserLanguage = 'en') {
+  const data = profile.serialize()
+  return {
+    ...data,
+    avatar_url: publicUrl(profile.avatar),
+    governorate: profile.governorate ? (language === 'ar' ? profile.governorate.nameAr : profile.governorate.nameEn) : null,
+    area: profile.area ? (language === 'ar' ? profile.area.nameAr : profile.area.nameEn) : null,
+  }
+}
+
 export function serializeRequestResponse(
   response: RequestResponse,
-  options?: { includeBusinessProfile?: boolean }
+  options?: { includeBusinessProfile?: boolean; language?: UserLanguage }
 ) {
   const data = response.serialize()
+  const language = options?.language || 'en'
   const serialized: Record<string, unknown> = {
     ...data,
     attachment_url: publicUrl(response.attachment),
@@ -174,10 +186,7 @@ export function serializeRequestResponse(
   }
 
   if (options?.includeBusinessProfile && response.businessUser?.businessProfile) {
-    serialized.business_profile = {
-      ...response.businessUser.businessProfile.serialize(),
-      avatar_url: publicUrl(response.businessUser.businessProfile.avatar),
-    }
+    serialized.business_profile = serializeBusinessProfile(response.businessUser.businessProfile, language)
   }
 
   return serialized
@@ -185,16 +194,18 @@ export function serializeRequestResponse(
 
 export async function enrichResponseWithRating(
   response: RequestResponse,
-  includeBusinessProfile = false
+  includeBusinessProfile = false,
+  language: UserLanguage = 'en'
 ) {
   const rating = await getBusinessRating(response.businessUserId)
-  const serialized = serializeRequestResponse(response, { includeBusinessProfile })
+  const serialized = serializeRequestResponse(response, { includeBusinessProfile, language })
 
   if (response.businessUser?.businessProfile) {
-    serialized.business_profile = serializeBusinessProfileBrief(
-      response.businessUser.businessProfile,
-      rating
-    )
+    const brief = serializeBusinessProfileBrief(response.businessUser.businessProfile, rating)
+    serialized.business_profile = {
+      ...(serialized.business_profile as Record<string, unknown> || {}),
+      ...brief,
+    }
   }
 
   return serialized
@@ -222,19 +233,19 @@ export function applyRealOffersFilter<T extends { where: (column: string, operat
   return query.where('price', '>', 0)
 }
 
-export function serializeDeliveryAddress(address: UserAddress | null) {
+export function serializeDeliveryAddress(address: UserAddress | null, language: UserLanguage = 'en') {
   if (!address) {
     return null
   }
 
   return {
     ...address.serialize(),
-    governorate: address.governorate?.serialize() ?? null,
-    area: address.area?.serialize() ?? null,
+    governorate: address.governorate ? (language === 'ar' ? address.governorate.nameAr : address.governorate.nameEn) : null,
+    area: address.area ? (language === 'ar' ? address.area.nameAr : address.area.nameEn) : null,
   }
 }
 
-export function serializeBusinessProfileForOrder(profile: BusinessProfile | null) {
+export function serializeBusinessProfileForOrder(profile: BusinessProfile | null, language: UserLanguage = 'en') {
   if (!profile) {
     return null
   }
@@ -243,8 +254,8 @@ export function serializeBusinessProfileForOrder(profile: BusinessProfile | null
     business_name: profile.businessName,
     avatar_url: publicUrl(profile.avatar),
     address: {
-      governorate: profile.governorate?.serialize() ?? null,
-      area: profile.area?.serialize() ?? null,
+      governorate: profile.governorate ? (language === 'ar' ? profile.governorate.nameAr : profile.governorate.nameEn) : null,
+      area: profile.area ? (language === 'ar' ? profile.area.nameAr : profile.area.nameEn) : null,
       block: profile.block,
       street: profile.street,
       building_name: profile.buildingName,
@@ -294,20 +305,21 @@ export function buildOrderStatusTimeline(status: OrderStatus) {
 
 export function serializeOrder(
   order: Order,
-  options?: { includeTimeline?: boolean; includePayment?: boolean }
+  options?: { includeTimeline?: boolean; includePayment?: boolean; language?: UserLanguage }
 ) {
+  const language = options?.language || 'en'
   const data: Record<string, unknown> = {
     ...order.serialize(),
     request: order.request ? serializeRequest(order.request) : null,
     request_response: order.requestResponse
-      ? serializeRequestResponse(order.requestResponse)
+      ? serializeRequestResponse(order.requestResponse, { language })
       : null,
     user: order.user ? serializeUserBrief(order.user) : null,
     business_user: order.businessUser ? serializeUserBrief(order.businessUser) : null,
     business_profile: order.businessUser?.businessProfile
-      ? serializeBusinessProfileForOrder(order.businessUser.businessProfile)
+      ? serializeBusinessProfileForOrder(order.businessUser.businessProfile, language)
       : null,
-    delivery_address: serializeDeliveryAddress(order.deliveryAddress ?? null),
+    delivery_address: serializeDeliveryAddress(order.deliveryAddress ?? null, language),
     additional_works: order.additionalWorks
       ? order.additionalWorks.map((work) => serializeOrderAdditionalWork(work))
       : undefined,

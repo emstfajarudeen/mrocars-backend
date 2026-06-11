@@ -183,7 +183,7 @@ export default class HomeController {
         order_status_counts: orderStatusCounts,
         recent_requests: recentRequests.map((item) => serializeRequest(item)),
         recent_orders: recentOrders.map((order) => ({
-          ...serializeOrder(order),
+          ...serializeOrder(order, { language: business.language }),
           user: order.user ? serializeUserWithPhone(order.user) : null,
         })),
         counts: {

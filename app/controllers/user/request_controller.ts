@@ -280,7 +280,7 @@ export default class RequestController {
       }
 
       const responses = await Promise.all(
-        serviceRequest.responses.map((item) => enrichResponseWithRating(item, true))
+        serviceRequest.responses.map((item) => enrichResponseWithRating(item, true, user.language))
       )
 
       return ApiResponse.success(response, {
@@ -372,7 +372,7 @@ export default class RequestController {
       const responses = await responsesQuery
 
       const data = await Promise.all(
-        responses.map((item) => enrichResponseWithRating(item, true))
+        responses.map((item) => enrichResponseWithRating(item, true, user.language))
       )
 
       return ApiResponse.success(response, { responses: data })
@@ -402,7 +402,7 @@ export default class RequestController {
         return ApiResponse.error(response, 'Response not found', undefined, 404)
       }
 
-      const serialized = await enrichResponseWithRating(requestResponse, true)
+      const serialized = await enrichResponseWithRating(requestResponse, true, user.language)
 
       return ApiResponse.success(response, { response: serialized })
     } catch {

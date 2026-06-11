@@ -152,7 +152,7 @@ export default class OrderController {
       return ApiResponse.success(
         response,
         {
-          order: serializeOrder(order),
+          order: serializeOrder(order, { language: user.language }),
           message: 'Order placed successfully',
         },
         'Order placed successfully',
@@ -198,7 +198,7 @@ export default class OrderController {
         })
         .paginate(page, limit)
 
-      const data = paginated.all().map((order) => serializeOrder(order))
+      const data = paginated.all().map((order) => serializeOrder(order, { language: user.language }))
 
       return ApiResponse.success(response, {
         data,
@@ -221,7 +221,7 @@ export default class OrderController {
         return ApiResponse.error(response, 'Order not found', undefined, 404)
       }
 
-      return ApiResponse.success(response, { order: serializeOrder(order) })
+      return ApiResponse.success(response, { order: serializeOrder(order, { language: user.language }) })
     } catch {
       return ApiResponse.error(response, 'Unauthorized', undefined, 401)
     }

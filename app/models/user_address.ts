@@ -66,9 +66,9 @@ export default class UserAddress extends compose(BaseModel, SoftDeletes) {
   @belongsTo(() => User)
   declare user: BelongsTo<typeof User>
 
-  @belongsTo(() => Governorate)
+  @belongsTo(() => Governorate, { serializeAs: null })
   declare governorate: BelongsTo<typeof Governorate>
 
-  @belongsTo(() => Area)
+  @belongsTo(() => Area, { serializeAs: null })
   declare area: BelongsTo<typeof Area>
 }

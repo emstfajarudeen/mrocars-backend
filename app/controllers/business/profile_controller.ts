@@ -3,7 +3,8 @@ import hash from '@adonisjs/core/services/hash'
 import User from '#models/user'
 import BusinessProfile from '#models/business_profile'
 import { ApiResponse } from '#helpers/response'
-import { deleteFileIfExists, publicUrl, storeFile, validateImageFile } from '#helpers/upload'
+import { serializeBusinessProfile } from '#helpers/request_helper'
+import { deleteFileIfExists, storeFile, validateImageFile } from '#helpers/upload'
 import AuthService from '#services/auth_service'
 import {
   bankDetailsValidator,
@@ -41,6 +42,7 @@ async function getOrCreateBusinessProfile(user: User) {
 
 function mapBusinessAddressPayload(payload: Record<string, unknown>) {
   const data: Record<string, unknown> = {}
+  if (payload.address_label !== undefined) data.addressLabel = payload.address_label
   if (payload.governorate_id !== undefined) data.governorateId = payload.governorate_id
   if (payload.area_id !== undefined) data.areaId = payload.area_id
   if (payload.block !== undefined) data.block = payload.block
@@ -64,7 +66,9 @@ export default class ProfileController {
 
       return ApiResponse.success(response, {
         user: user.serialize(),
-        business_profile: user.businessProfile?.serialize() ?? null,
+        business_profile: user.businessProfile
+          ? serializeBusinessProfile(user.businessProfile, user.language)
+          : null,
       })
     } catch {
       return ApiResponse.error(response, 'Unauthorized', undefined, 401)
@@ -77,6 +81,24 @@ export default class ProfileController {
       const payload = await request.validateUsing(updateProfileValidator)
 
       if (payload.name !== undefined) user.name = payload.name
+      if (payload.phone_code !== undefined) user.phoneCode = payload.phone_code
+      if (payload.phone_number !== undefined) user.phoneNumber = payload.phone_number
+
+      if (payload.email !== undefined && payload.email !== user.email) {
+        const existing = await User.query()
+          .where('email', payload.email)
+          .whereNot('id', user.id)
+          .first()
+        if (existing) {
+          return ApiResponse.error(
+            response,
+            'Email already registered',
+            { email: ['Email already registered'] },
+            422
+          )
+        }
+        user.email = payload.email
+      }
       await user.save()
 
       const profile = await getOrCreateBusinessProfile(user)
@@ -104,16 +126,11 @@ export default class ProfileController {
       await profile.load('governorate')
       await profile.load('area')
 
-      const profileData = {
-        ...profile.serialize(),
-        avatar_url: publicUrl(profile.avatar),
-      }
-
       return ApiResponse.success(
         response,
         {
           user: user.serialize(),
-          business_profile: profileData,
+          business_profile: serializeBusinessProfile(profile, user.language),
           message: 'Profile updated',
         },
         'Profile updated'
@@ -138,7 +155,7 @@ export default class ProfileController {
       return ApiResponse.success(
         response,
         {
-          business_profile: profile.serialize(),
+          business_profile: serializeBusinessProfile(profile, user.language),
           message: 'Address updated',
         },
         'Address updated'

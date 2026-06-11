@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import type { UserLanguage } from '#types/user'
 import Order from '#models/order'
 import OrderAdditionalWork from '#models/order_additional_work'
 import { ApiResponse } from '#helpers/response'
@@ -58,8 +59,8 @@ function businessOrderDetailQuery() {
     .preload('rating')
 }
 
-function serializeBusinessOrderDetail(order: Order) {
-  const serialized = serializeOrder(order, { includeTimeline: true })
+function serializeBusinessOrderDetail(order: Order, language: UserLanguage = 'en') {
+  const serialized = serializeOrder(order, { includeTimeline: true, language })
   serialized.user = order.user ? serializeUserWithPhone(order.user) : null
   return serialized
 }
@@ -101,7 +102,7 @@ export default class OrderController {
         .paginate(page, limit)
 
       const data = paginated.all().map((order) => ({
-        ...serializeOrder(order),
+        ...serializeOrder(order, { language: business.language }),
         user: order.user ? serializeUserWithPhone(order.user) : null,
       }))
 
@@ -126,7 +127,7 @@ export default class OrderController {
         return ApiResponse.error(response, 'Order not found', undefined, 404)
       }
 
-      return ApiResponse.success(response, { order: serializeBusinessOrderDetail(order) })
+      return ApiResponse.success(response, { order: serializeBusinessOrderDetail(order, business.language) })
     } catch {
       return ApiResponse.error(response, 'Unauthorized', undefined, 401)
     }
@@ -175,7 +176,7 @@ export default class OrderController {
       return ApiResponse.success(
         response,
         {
-          order: serializeOrder(order, { includeTimeline: true }),
+          order: serializeOrder(order, { includeTimeline: true, language: business.language }),
           message: 'Order status updated',
         },
         'Order status updated'

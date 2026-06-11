@@ -8642,7 +8642,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"governorate_id\": 1,\n  \"area_id\": 1,\n  \"block\": \"3\",\n  \"street\": \"Industrial Area St\",\n  \"building_name\": \"Auto Center\",\n  \"building_no\": \"5\",\n  \"floor_no\": \"G\",\n  \"shop_no\": \"12\",\n  \"latitude\": 29.3759,\n  \"longitude\": 47.9774\n}"
+                  "raw": "{\n  \"address_label\": \"Main Office\",\n  \"governorate_id\": 1,\n  \"area_id\": 1,\n  \"block\": \"3\",\n  \"street\": \"Industrial Area St\",\n  \"building_name\": \"Auto Center\",\n  \"building_no\": \"5\",\n  \"floor_no\": \"G\",\n  \"shop_no\": \"12\",\n  \"latitude\": 29.3759,\n  \"longitude\": 47.9774\n}"
                 },
                 "description": "Updates the business's physical location/address."
               },

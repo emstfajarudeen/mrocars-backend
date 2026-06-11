@@ -63,7 +63,7 @@ export default class User extends compose(BaseModel, AuthFinder, SoftDeletes) {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 
-  @hasOne(() => BusinessProfile)
+  @hasOne(() => BusinessProfile, { serializeAs: null })
   declare businessProfile: HasOne<typeof BusinessProfile>
 
   @hasMany(() => UserVehicle)
