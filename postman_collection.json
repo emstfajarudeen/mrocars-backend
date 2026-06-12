@@ -3124,6 +3124,81 @@
           ]
         },
         {
+          "name": "Guests",
+          "item": [
+            {
+              "name": "List guests",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('Has data array', function () { var j = pm.response.json(); pm.expect(j.data).to.be.an('array'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_auth_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Inertia",
+                    "value": "true",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Inertia-Version",
+                    "value": "1",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/admin/guests?page=1&limit=15&search=&is_active=",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "guests"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Page number (integer, default 1, optional)"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "15",
+                      "description": "Items per page (integer, default 15, optional)"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "description": "Search by name or email (string, optional)"
+                    },
+                    {
+                      "key": "is_active",
+                      "value": "",
+                      "description": "Filter by active status: true|false (optional)"
+                    }
+                  ]
+                },
+                "description": "Returns a paginated list of guest users (users with no password or email matching guest_%@guest.com). Supports filtering by search term and is_active status. Excludes registered (non-guest) users."
+              }
+            }
+          ]
+        },
+        {
           "name": "Businesses",
           "item": [
             {
@@ -4604,9 +4679,9 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Ahmed Al-Salem\",\n  \"email\": \"ahmed@example.com\",\n  \"phone_code\": \"+965\",\n  \"phone_number\": \"55567890\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"language\": \"en\"\n}"
+                  "raw": "{\n  \"name\": \"Ahmed Al-Salem\",\n  \"email\": \"ahmed@example.com\",\n  \"phone_code\": \"+965\",\n  \"phone_number\": \"55567890\",\n  \"password\": \"password123\"\n}"
                 },
-                "description": "Registers a new user account and returns JWT tokens."
+                "description": "Registers a new user account and returns JWT tokens. Note: password_confirmation and language fields have been removed from the validator."
               },
               "event": [
                 {
@@ -6871,7 +6946,7 @@
                     }
                   ]
                 },
-                "description": "Accepts a business offer, rejects others, creates a chat, and notifies.",
+                "description": "Accept a business offer/response for a service request. The request must have status 'new' (previously required 'confirmed'). On success, an order is created and the response includes the full request details plus chat_id.",
                 "body": {
                   "mode": "raw",
                   "raw": "{}",
@@ -7013,7 +7088,7 @@
                     }
                   ]
                 },
-                "description": "Returns the user's orders, filterable by status and category."
+                "description": "Get a paginated list of the user's orders. Response now includes a counts object: { all: number, categories: [{ id, name, count }] } for filtering display purposes."
               },
               "event": [
                 {
@@ -7926,7 +8001,7 @@
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"business@mrocars.com\",\n  \"password\": \"password123\"\n}"
                 },
-                "description": "Authenticates a business user and returns JWT tokens + business profile."
+                "description": "Authenticates a business user. Returns JWT tokens and a fully-serialized business_profile object (including address with governorate/area names based on language)."
               },
               "event": [
                 {
@@ -8586,7 +8661,7 @@
                     }
                   ]
                 },
-                "description": "Updates business profile with optional avatar upload."
+                "description": "Update business user profile. Now also accepts phone_code, phone_number, and email fields. If email is changed, it must be unique."
               },
               "event": [
                 {
@@ -9092,14 +9167,14 @@
                       "description": "date, required if offer_validity_type=date"
                     },
                     {
-                      "key": "attachment",
+                      "key": "attachments",
                       "value": "",
                       "type": "file",
-                      "description": "file, optional — Quote attachment (jpg/png/pdf, max 5MB)"
+                      "description": "file[], optional — Multiple quote attachments (jpg/png/pdf, max 5MB each). Use the same key name 'attachments' for each file."
                     }
                   ]
                 },
-                "description": "Submits a price offer for a service request. Notifies the requesting user."
+                "description": "Submit a price offer for a service request. Note: sending a response no longer changes the request status to 'confirmed'. Use attachments[] (multiple files accepted)."
               },
               "event": [
                 {
@@ -9187,9 +9262,10 @@
                       "type": "text"
                     },
                     {
-                      "key": "attachment",
+                      "key": "attachments",
                       "value": "",
-                      "type": "file"
+                      "type": "file",
+                      "description": "file[], optional — Replace all attachments with new files (old files are deleted)"
                     }
                   ]
                 },
@@ -9463,7 +9539,7 @@
                   "mode": "raw",
                   "raw": "{\n  \"status\": \"pending\"\n}"
                 },
-                "description": "Updates order status. Allowed: new→pending, pending→delivered. Notifies user."
+                "description": "Update an order's status. Response returns { order_id, request_id } (the serialized order is no longer returned in this response)."
               },
               "event": [
                 {
@@ -9543,14 +9619,14 @@
                       "description": "file, optional — Voice note (max 10MB)"
                     },
                     {
-                      "key": "attachment",
+                      "key": "attachments",
                       "value": "",
                       "type": "file",
-                      "description": "file, optional — Photo (jpg/jpeg/png, max 5MB)"
+                      "description": "file[], optional — Multiple photos (jpg/jpeg/png, max 5MB each)"
                     }
                   ]
                 },
-                "description": "Requests additional work approval from the user. Only for new/pending orders."
+                "description": "Add an additional work item to an order. Response returns { additional_work_id, order_id } instead of the full additional_work object. Use attachments[] for multiple file uploads."
               },
               "event": [
                 {
@@ -9691,13 +9767,14 @@
                       "type": "file"
                     },
                     {
-                      "key": "attachment",
+                      "key": "attachments",
                       "value": "",
-                      "type": "file"
+                      "type": "file",
+                      "description": "file[], optional — Replaces all existing attachments (old files deleted)"
                     }
                   ]
                 },
-                "description": "Updates a pending additional work item. Cannot update accepted/rejected."
+                "description": "Update an existing additional work item. Response returns { additional_work_id, order_id } instead of the full object. Providing attachments[] replaces all previous files."
               },
               "event": [
                 {
