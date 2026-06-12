@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Badge } from '~/components/ui/Badge'
 import { Button } from '~/components/ui/Button'
 import { Card } from '~/components/ui/Card'
+import { Modal } from '~/components/ui/Modal'
 import { PageHeader } from '~/components/ui/PageHeader'
 import { Select } from '~/components/ui/Select'
 import { useToast } from '~/components/ui/Toast'
@@ -47,7 +48,19 @@ type Props = {
       payment_status: string
     }
     status_timeline: TimelineStep[]
-    additional_works?: Array<{ id: number; description: string; status: string; price: number }>
+    additional_works?: Array<{
+      id: number
+      notes: string | null
+      description?: string
+      status: string
+      price: number
+      voice_note?: string | null
+      voice_note_url?: string | null
+      voiceNote?: string | null
+      attachments?: string[]
+      payment_status?: string
+      paymentStatus?: string
+    }>
     order_rating: { rating: number; review: string | null } | null
   }
 }
@@ -55,6 +68,7 @@ type Props = {
 export default function OrderDetail({ order }: Props) {
   const toast = useToast()
   const [status, setStatus] = useState(order.status)
+  const [selectedWork, setSelectedWork] = useState<any | null>(null)
 
   const updateStatus = async () => {
     try {
@@ -110,9 +124,11 @@ export default function OrderDetail({ order }: Props) {
             <div className="space-y-2 text-sm">
               <p className="font-medium">{order.business_profile.business_name}</p>
               <p className="font-mono">{order.business_profile.phone.phone_code} {order.business_profile.phone.phone_number}</p>
-              <p className="text-text-secondary">
-                {order.business_profile.address.governorate?.nameEn}, {order.business_profile.address.area?.nameEn}
-              </p>
+              {([order.business_profile.address.governorate?.nameEn, order.business_profile.address.area?.nameEn].filter(Boolean).join(', ')) ? (
+                <p className="text-text-secondary">
+                  {[order.business_profile.address.governorate?.nameEn, order.business_profile.address.area?.nameEn].filter(Boolean).join(', ')}
+                </p>
+              ) : null}
             </div>
           ) : <p className="text-text-secondary">—</p>}
         </Card>
@@ -120,10 +136,12 @@ export default function OrderDetail({ order }: Props) {
           {order.delivery_address ? (
             <div className="space-y-2 text-sm">
               <p className="font-medium">{order.delivery_address.label}</p>
-              <p>{order.delivery_address.block}, {order.delivery_address.street}</p>
-              <p className="text-text-secondary">
-                {order.delivery_address.governorate?.nameEn}, {order.delivery_address.area?.nameEn}
-              </p>
+              <p>{[order.delivery_address.block, order.delivery_address.street].filter(Boolean).join(', ')}</p>
+              {([order.delivery_address.governorate?.nameEn, order.delivery_address.area?.nameEn].filter(Boolean).join(', ')) ? (
+                <p className="text-text-secondary">
+                  {[order.delivery_address.governorate?.nameEn, order.delivery_address.area?.nameEn].filter(Boolean).join(', ')}
+                </p>
+              ) : null}
             </div>
           ) : <p className="text-text-secondary">—</p>}
         </Card>
@@ -166,15 +184,30 @@ export default function OrderDetail({ order }: Props) {
       {order.additional_works && order.additional_works.length > 0 ? (
         <Card title="Additional Works" className="mb-6">
           <div className="space-y-3">
-            {order.additional_works.map((work) => (
-              <div key={work.id} className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
-                <p>{work.description}</p>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono">{formatCurrency(work.price)}</span>
-                  <Badge variant={statusToBadge(work.status)}>{formatStatusLabel(work.status)}</Badge>
+            {order.additional_works.map((work) => {
+              const hasVoiceNote = !!(work.voice_note_url || work.voiceNote)
+              const hasAttachments = !!(work.attachments && work.attachments.length > 0)
+              const hasMoreData = hasVoiceNote || hasAttachments || (work.notes && work.notes.length > 100)
+
+              return (
+                <div key={work.id} className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
+                  <div className="flex flex-col gap-1 min-w-0 flex-1 pr-4">
+                    <p className="font-medium text-text-primary truncate">{work.notes || work.description || 'Additional Work'}</p>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedWork(work)}
+                      className="text-xs text-accent hover:underline text-left w-fit"
+                    >
+                      View Details {hasMoreData ? '(Includes media)' : ''}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="font-mono">{formatCurrency(Number(work.price))}</span>
+                    <Badge variant={statusToBadge(work.status)}>{formatStatusLabel(work.status)}</Badge>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </Card>
       ) : null}
@@ -187,6 +220,74 @@ export default function OrderDetail({ order }: Props) {
           </div>
         </Card>
       ) : null}
+      {selectedWork && (
+        <Modal
+          open={!!selectedWork}
+          onOpenChange={(open) => !open && setSelectedWork(null)}
+          title="Additional Work Details"
+        >
+          <div className="space-y-4 pt-2">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Description</span>
+              <p className="mt-1 text-sm text-text-primary whitespace-pre-wrap">{selectedWork.notes || selectedWork.description || 'No description provided'}</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Price</span>
+                <p className="mt-1 font-mono text-sm text-accent">{formatCurrency(Number(selectedWork.price))}</p>
+              </div>
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Status</span>
+                <div className="mt-1">
+                  <Badge variant={statusToBadge(selectedWork.status)}>{formatStatusLabel(selectedWork.status)}</Badge>
+                </div>
+              </div>
+            </div>
+
+            {(selectedWork.payment_status || selectedWork.paymentStatus) && (
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Payment Status</span>
+                <div className="mt-1">
+                  <Badge variant={statusToBadge(selectedWork.payment_status || selectedWork.paymentStatus)}>{formatStatusLabel(selectedWork.payment_status || selectedWork.paymentStatus)}</Badge>
+                </div>
+              </div>
+            )}
+
+            {(selectedWork.voice_note_url || selectedWork.voiceNote) && (
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Voice Note</span>
+                <div className="mt-2">
+                  <audio controls src={selectedWork.voice_note_url || selectedWork.voiceNote} className="w-full h-10" />
+                </div>
+              </div>
+            )}
+
+            {selectedWork.attachments && selectedWork.attachments.length > 0 && (
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Attachments</span>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {selectedWork.attachments.map((url: string, index: number) => (
+                    <a
+                      key={index}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative aspect-square overflow-hidden rounded-md border border-border bg-bg-hover"
+                    >
+                      <img
+                        src={url}
+                        alt={`Attachment ${index + 1}`}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
     </>
   )
 }

@@ -88,7 +88,12 @@ export default function UserDetail({ user }: Props) {
                   <span className="font-medium">{a.label}</span>
                   {a.isDefault ? <Badge variant="success">Default</Badge> : null}
                 </div>
-                <p className="text-sm text-text-secondary">{a.governorate?.nameEn}, {a.area?.nameEn} — Block {a.block}, {a.street}</p>
+                <p className="text-sm text-text-secondary">
+                  {[
+                    [a.governorate?.nameEn, a.area?.nameEn].filter(Boolean).join(', '),
+                    [a.block ? `Block ${a.block}` : '', a.street].filter(Boolean).join(', ')
+                  ].filter(Boolean).join(' — ')}
+                </p>
               </div>
             ))}
           </div>
