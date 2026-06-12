@@ -84,7 +84,7 @@ Paginated response data:
 
 `request` includes request identifiers, user/category/vehicle references, description fields, voice/photo URLs, pickup/delivery fields, `status`, timestamps, optional `category`, `user_vehicle`, `user`, `attachments`, `responses_count`, and `has_responded`.
 
-`response` for a business offer includes `id`, `response_no`, `request_id`, `business_user_id`, `notes`, `price`, `offer_validity_type`, `offer_valid_until`, `attachment_url`, `status`, timestamps, and optional business summary/profile/rating.
+`response` for a business offer includes `response_id`, `request_id`, `price`, `description` (notes), `attachments` (array of file URLs), `offer_validity_type`, `offer_valid_until`, `status`, and optional `business` object with `id`, `name`, `avatar`, `rating`, `address`, and contact details.
 
 `order` includes `id`, `order_no`, request/response references, user/business references, pricing fields, `payment_method`, `payment_status`, `delivery_address_id`, `status`, timestamps, nested `request`, `request_response`, `user`, `business_user`, `business_profile`, `delivery_address`, `additional_works`, `order_rating`, `payment`, and sometimes `status_timeline`.
 
@@ -198,8 +198,8 @@ File uploads are sent as `multipart/form-data`.
 | `photos` | user request photos | optional array; max 5 files; `jpg`, `jpeg`, `png`, `webp`; max `5mb` each |
 | `voice_note` | request, chat, additional work | optional unless endpoint workflow requires content; `mp3`, `mp4`, `wav`, `m4a`; max `10mb` |
 | `attachment` | chat | optional; `jpg`, `jpeg`, `png`, `pdf`, `doc`, `docx`; max `10mb` |
-| `attachment` | business response | optional; `jpg`, `jpeg`, `png`, `pdf`; max `5mb` |
-| `attachment` | additional work | optional; `jpg`, `jpeg`, `png`; max `5mb` |
+| `attachments[]` | business response | optional, multiple files; `jpg`, `jpeg`, `png`, `pdf`; max `5mb` each; use the same field name for each file |
+| `attachments[]` | additional work | optional, multiple files; `jpg`, `jpeg`, `png`; max `5mb` each |
 
 Uploaded file URLs are returned as `/uploads/<stored_path>`.
 
@@ -225,9 +225,7 @@ Body:
 | `email` | string | yes | valid email; must be unique |
 | `phone_code` | string | yes | |
 | `phone_number` | string | yes | |
-| `password` | string | yes | min 8; must match confirmation |
-| `password_confirmation` | string | yes | |
-| `language` | enum | no | `en`, `ar`; default `en` |
+| `password` | string | yes | min 8 |
 
 Response: `data.user`, `data.access_token`, `data.refresh_token`.
 
@@ -771,15 +769,15 @@ Key errors: `404 Request not found`, `422 Only new requests can be cancelled`, `
 
 `GET {BASE_URL}/api/v1/user/requests/:requestId/responses`
 
-Description: Lists business offers for a request. Rejection markers and zero-price records are hidden.
+Description: Returns the full request detail including all business offers for that request. Internally delegates to Get Request Detail — the response shape is identical to `GET /user/requests/:id`. Rejection markers and zero-price records are hidden.
 
 Auth: JWT required, role `user`.
 
 Query:
-- `governorate_id` (number, optional) - Filter responses by governorate
-- `area_id` (number, optional) - Filter responses by area
+- `governorate_id` (number, optional) - Filter embedded responses by governorate
+- `area_id` (number, optional) - Filter embedded responses by area
 
-Response: `data.responses[]` (filtered if query params are provided).
+Response: `data.request` (same shape as Get Request Detail, including `responses[]` array).
 
 Key errors: `404 Request not found`, `401 Unauthorized`.
 
@@ -799,13 +797,13 @@ Key errors: `404 Request not found`, `404 Response not found`, `401 Unauthorized
 
 `POST {BASE_URL}/api/v1/user/requests/:requestId/responses/:responseId/accept`
 
-Description: Accepts one business offer, rejects other offers, sets the request to `accepted`, and creates or reuses a chat.
+Description: Accepts one business offer for a `new` request, rejects other pending offers, and creates or reuses a chat. On success returns full request detail (including all responses) plus the chat ID.
 
 Auth: JWT required, role `user`.
 
-Response: `data.request`, `data.chat_id`, `data.message`.
+Response: `data.request` (full detail with `responses[]`), `data.chat_id`, `data.message`.
 
-Key errors: `404 Request not found`, `404 Response not found`, `422 Request must be confirmed before accepting an offer`, `401 Unauthorized`.
+Key errors: `404 Request not found`, `404 Response not found`, `422 Request must be new before accepting an offer`, `401 Unauthorized`.
 
 ## Checkout & Orders
 
@@ -839,7 +837,19 @@ Auth: JWT required, role `user`.
 
 Query: `page`, `limit`, optional `status` (`new`, `pending`, `delivered`, `cancelled`), optional `category_id`.
 
-Response: paginated `data.data[]` order list.
+Response: paginated `data.data[]` order list, plus `data.counts` object:
+
+```json
+{
+  "counts": {
+    "all": 12,
+    "categories": [
+      { "id": 1, "name": "Spare Parts", "count": 8 },
+      { "id": 2, "name": "Tyres", "count": 4 }
+    ]
+  }
+}
+```
 
 Key errors: `404 Category not found`, `401 Unauthorized`.
 
@@ -1179,8 +1189,8 @@ Notes:
 - `received_this_month` is the paid revenue amount for the current month.
 - `total_received_this_month` is the count of paid orders this month.
 - Revenue and order values are scoped to the authenticated business user.
-- Recent request objects use the same request serializer as other request APIs.
-- Recent order objects use the same order serializer as other order APIs.
+- `recent_requests` items are localized flat objects: `{ request_no, user_name, category, vehicle, status, submitted }`.
+- `recent_orders` items are localized flat objects: `{ order_no, user_name, status, title, vehicle, total_amount }`.
 
 Key errors: `401 Unauthorized`.
 
@@ -1243,6 +1253,7 @@ Body:
 
 | Field | Type | Required |
 | --- | --- | --- |
+| `address_label` | string | no |
 | `governorate_id` | number | no |
 | `area_id` | number | no |
 | `block` | string | no |
@@ -1358,11 +1369,11 @@ Key errors: `404 Request not found`, `401 Unauthorized`.
 
 `POST {BASE_URL}/api/v1/business/requests/:requestId/respond`
 
-Description: Sends a price offer for a `new` request, changes request status to `confirmed`, and notifies the user.
+Description: Sends a price offer for a `new` request and notifies the user. Note: sending a response no longer changes the request status to `confirmed`.
 
 Auth: JWT required, role `business`.
 
-Body:
+Body (`multipart/form-data`):
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
@@ -1370,7 +1381,7 @@ Body:
 | `price` | number | yes | min 0 |
 | `offer_validity_type` | enum | yes | `date`, `open` |
 | `offer_valid_until` | date | conditional | required when validity type is `date` |
-| `attachment` | file | no | multipart |
+| `attachments[]` | file[] | no | multiple files; `jpg`, `jpeg`, `png`, `pdf`; max `5mb` each |
 
 Response: `201`, `data.response`, `data.message`.
 
@@ -1380,11 +1391,11 @@ Key errors: `404 Request not available for response`, `422 You have already resp
 
 `PUT {BASE_URL}/api/v1/business/requests/:requestId/respond/:responseId`
 
-Description: Updates a pending offer and optional attachment.
+Description: Updates a pending offer. Providing `attachments[]` replaces all previous attachments.
 
 Auth: JWT required, role `business`.
 
-Body:
+Body (`multipart/form-data`):
 
 | Field | Type | Required |
 | --- | --- | --- |
@@ -1392,7 +1403,7 @@ Body:
 | `price` | number | no |
 | `offer_validity_type` | enum | no: `date`, `open` |
 | `offer_valid_until` | date | conditional |
-| `attachment` | file | no |
+| `attachments[]` | file[] | no |
 
 Response: `data.response`, `data.message`.
 
@@ -1452,7 +1463,7 @@ Auth: JWT required, role `business`.
 
 Body: `status` enum required: `pending`, `delivered`.
 
-Response: `data.order`, `data.message`.
+Response: `data.order_id`, `data.request_id`, `data.message`. Note: the full order object is no longer returned in this response.
 
 Key errors: `404 Order not found`, `422 Cannot change status from <current> to <target>`, `422 Validation failed`, `500`.
 
@@ -1464,16 +1475,16 @@ Description: Requests additional paid work from the user while order is `new` or
 
 Auth: JWT required, role `business`.
 
-Body:
+Body (`multipart/form-data`):
 
 | Field | Type | Required |
 | --- | --- | --- |
 | `notes` | string | no |
 | `price` | number | yes |
 | `voice_note` | file | no |
-| `attachment` | file | no |
+| `attachments[]` | file[] | no | multiple photos; `jpg`, `jpeg`, `png`; max `5mb` each |
 
-Response: `201`, `data.additional_work`, `data.message`.
+Response: `201`, `data.additional_work_id`, `data.order_id`. Note: the full additional work object is no longer returned — use List Additional Works to fetch details.
 
 Key errors: `404 Order not found`, `422 Additional work can only be added to new or pending orders`, `422 Validation failed`, `500`.
 
@@ -1493,20 +1504,20 @@ Key errors: `404 Order not found`, `401 Unauthorized`.
 
 `PUT {BASE_URL}/api/v1/business/orders/:id/additional-works/:workId`
 
-Description: Updates a pending additional work request.
+Description: Updates a pending additional work request. Providing `attachments[]` replaces all existing attachments.
 
 Auth: JWT required, role `business`.
 
-Body:
+Body (`multipart/form-data`):
 
 | Field | Type | Required |
 | --- | --- | --- |
 | `notes` | string | no |
 | `price` | number | no |
 | `voice_note` | file | no |
-| `attachment` | file | no |
+| `attachments[]` | file[] | no |
 
-Response: `data.additional_work`, `data.message`.
+Response: `data.additional_work_id`, `data.order_id`. Note: the full additional work object is no longer returned — use List Additional Works to fetch details.
 
 Key errors: `404 Order not found`, `404 Additional work not found`, `422 Only pending works can be updated`, `422 Validation failed`, `500`.
 
