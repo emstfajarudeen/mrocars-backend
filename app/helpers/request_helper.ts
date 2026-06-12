@@ -421,3 +421,122 @@ export async function findOwnedOrder(userId: number, orderId: number) {
 export async function findBusinessOrder(businessUserId: number, orderId: number) {
   return Order.query().where('id', orderId).where('businessUserId', businessUserId).first()
 }
+
+export async function serializeUserOrder(order: Order, language: UserLanguage = 'en') {
+  const rating = await getBusinessRating(order.businessUserId)
+
+  const category = order.request?.category
+    ? (language === 'ar' ? order.request.category.nameAr : order.request.category.nameEn)
+    : null
+
+  let vehicle = null
+  if (order.request?.userVehicle) {
+    vehicle = {
+      id: order.request.userVehicle.id,
+      brand: order.request.userVehicle.carBrand?.name || null,
+      model: order.request.userVehicle.carModel?.name || null,
+      year: order.request.userVehicle.year || null,
+    }
+  }
+
+  let businessProfile = null
+  const profile = order.businessUser?.businessProfile
+  if (profile) {
+    businessProfile = {
+      id: order.businessUserId,
+      business_name: profile.businessName,
+      avatar: profile.avatar ? publicUrl(profile.avatar) : null,
+      rating: rating.rating_avg,
+      reviews_count: rating.total_reviews,
+      phone_code: profile.phoneCode,
+      phone_number: profile.phoneNumber,
+      governorate: profile.governorate
+        ? (language === 'ar' ? profile.governorate.nameAr : profile.governorate.nameEn)
+        : null,
+      area: profile.area ? (language === 'ar' ? profile.area.nameAr : profile.area.nameEn) : null,
+      block: profile.block,
+      street: profile.street,
+      building_name: profile.buildingName,
+      building_no: profile.buildingNo,
+      floor_no: profile.floorNo,
+      shop_no: profile.shopNo,
+      latitude: profile.latitude ? Number(profile.latitude) : null,
+      longitude: profile.longitude ? Number(profile.longitude) : null,
+    }
+  }
+
+  const requestDetails = order.request
+    ? {
+        title: order.request.title,
+        no_of_tyres: order.request.noOfTyres,
+        status: order.request.status,
+      }
+    : null
+
+  return {
+    order_no: order.orderNo,
+    request_no: order.request?.requestNo || null,
+    category,
+    vehicle,
+    business_profile: businessProfile,
+    total_amount: order.totalAmount,
+    payment_method: order.paymentMethod,
+    request_details: requestDetails,
+    order_date: order.createdAt?.toISO() ?? null,
+    service_fee: order.platformFee,
+    delivery_fee: order.deliveryFee,
+    additional_work_count: order.additionalWorks ? order.additionalWorks.length : 0,
+  }
+}
+
+export async function serializeUserOrderList(order: Order, language: UserLanguage = 'en') {
+  const rating = await getBusinessRating(order.businessUserId)
+
+  const businessProfile = order.businessUser?.businessProfile
+    ? {
+        id: order.businessUserId,
+        business_name: order.businessUser.businessProfile.businessName,
+        avatar: order.businessUser.businessProfile.avatar
+          ? publicUrl(order.businessUser.businessProfile.avatar)
+          : null,
+        rating: {
+          rating_avg: rating.rating_avg,
+          rating_count: rating.total_reviews,
+        },
+      }
+    : null
+
+  const vehicle = order.request?.userVehicle
+    ? {
+        id: order.request.userVehicle.id,
+        brand: order.request.userVehicle.carBrand?.name || null,
+        model: order.request.userVehicle.carModel?.name || null,
+        year: order.request.userVehicle.year || null,
+      }
+    : null
+
+  const category = order.request?.category
+    ? (language === 'ar' ? order.request.category.nameAr : order.request.category.nameEn)
+    : null
+
+  const request = order.request
+    ? {
+        id: order.request.id,
+        title: order.request.title,
+        no_of_tyres: order.request.noOfTyres,
+        description: order.request.description,
+        vehicle,
+        category,
+      }
+    : null
+
+  return {
+    business_profile: businessProfile,
+    status: order.status,
+    request,
+    order_no: order.orderNo,
+    additional_work_count: order.additionalWorks ? order.additionalWorks.length : 0,
+  }
+}
+
+

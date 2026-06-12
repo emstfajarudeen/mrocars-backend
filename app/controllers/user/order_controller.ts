@@ -5,6 +5,7 @@ import OrderAdditionalWork from '#models/order_additional_work'
 import OrderRating from '#models/order_rating'
 import RequestResponse from '#models/request_response'
 import UserAddress from '#models/user_address'
+import Category from '#models/category'
 import { ApiResponse } from '#helpers/response'
 import {
   buildPaginationMeta,
@@ -17,8 +18,9 @@ import {
   findOwnedOrder,
   generateOrderNo,
   resolveCategoryId,
-  serializeOrder,
   serializeOrderAdditionalWork,
+  serializeUserOrder,
+  serializeUserOrderList,
 } from '#helpers/request_helper'
 import {
   createOrderValidator,
@@ -152,7 +154,7 @@ export default class OrderController {
       return ApiResponse.success(
         response,
         {
-          order: serializeOrder(order, { language: user.language }),
+          order: await serializeUserOrder(order, user.language),
           message: 'Order placed successfully',
         },
         'Order placed successfully',
@@ -196,13 +198,56 @@ export default class OrderController {
         .preload('businessUser', (businessQuery) => {
           businessQuery.preload('businessProfile')
         })
+        .preload('additionalWorks')
         .paginate(page, limit)
 
-      const data = paginated.all().map((order) => serializeOrder(order, { language: user.language }))
+      const data = await Promise.all(
+        paginated.all().map((order) => serializeUserOrderList(order, user.language))
+      )
+
+      // Fetch all active categories
+      const activeCategories = await Category.query().where('isActive', true).orderBy('sortOrder', 'asc')
+
+      // Query order counts grouped by request category
+      const countsQuery = db.from('orders')
+        .innerJoin('requests', 'orders.request_id', 'requests.id')
+        .where('orders.user_id', user.id)
+        .whereNull('orders.deleted_at')
+
+      const totalQuery = Order.query()
+        .where('userId', user.id)
+
+      if (status) {
+        countsQuery.where('orders.status', status)
+        totalQuery.where('status', status)
+      }
+
+      const countsRaw = await countsQuery
+        .select('requests.category_id')
+        .count('* as total')
+        .groupBy('requests.category_id')
+
+      const countsMap = new Map<number, number>()
+      for (const row of countsRaw) {
+        countsMap.set(Number(row.category_id), Number(row.total))
+      }
+
+      const categoryCounts = activeCategories.map((cat) => ({
+        id: cat.id,
+        name: user.language === 'ar' ? cat.nameAr : cat.nameEn,
+        count: countsMap.get(cat.id) || 0,
+      }))
+
+      const totalOrdersRow = await totalQuery.count('* as total')
+      const totalCount = Number(totalOrdersRow[0].$extras.total || 0)
 
       return ApiResponse.success(response, {
         data,
         meta: buildPaginationMeta(paginated),
+        counts: {
+          all: totalCount,
+          categories: categoryCounts,
+        },
       })
     } catch {
       return ApiResponse.error(response, 'Unauthorized', undefined, 401)
@@ -221,7 +266,7 @@ export default class OrderController {
         return ApiResponse.error(response, 'Order not found', undefined, 404)
       }
 
-      return ApiResponse.success(response, { order: serializeOrder(order, { language: user.language }) })
+      return ApiResponse.success(response, { order: await serializeUserOrder(order, user.language) })
     } catch {
       return ApiResponse.error(response, 'Unauthorized', undefined, 401)
     }

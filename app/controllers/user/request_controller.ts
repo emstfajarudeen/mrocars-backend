@@ -545,6 +545,16 @@ export default class RequestController {
       await serviceRequest.load('userVehicle', (vehicleQuery) => {
         vehicleQuery.preload('carBrand').preload('carModel')
       })
+      await serviceRequest.load('attachments')
+      await serviceRequest.load('responses', (responsesQuery) => {
+        applyRealOffersFilter(responsesQuery)
+          .orderBy('createdAt', 'asc')
+          .preload('businessUser', (businessQuery: any) => {
+            businessQuery.preload('businessProfile', (profileQuery: any) => {
+              profileQuery.preload('governorate').preload('area')
+            })
+          })
+      })
 
       const order = await Order.query()
         .where('requestResponseId', requestResponse.id)
@@ -580,10 +590,71 @@ export default class RequestController {
         }
       )
 
+      const responses = await Promise.all(
+        serviceRequest.responses.map(async (item) => {
+          const rating = await getBusinessRating(item.businessUserId)
+          const businessProfile = item.businessUser?.businessProfile
+          return {
+            response_id: item.id,
+            price: item.price,
+            description: item.notes,
+            attachments: (item.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
+            offer_validity_type: item.offerValidityType,
+            offer_valid_until: item.offerValidUntil?.toISO() ?? item.offerValidUntil ?? null,
+            business: businessProfile ? {
+              id: item.businessUserId,
+              name: businessProfile.businessName,
+              avatar: businessProfile.avatar ? publicUrl(businessProfile.avatar) : null,
+              rating: rating.rating_avg,
+              address: {
+                governorate: businessProfile.governorate ? (user.language === 'ar' ? businessProfile.governorate.nameAr : businessProfile.governorate.nameEn) : null,
+                area: businessProfile.area ? (user.language === 'ar' ? businessProfile.area.nameAr : businessProfile.area.nameEn) : null,
+                block: businessProfile.block,
+                street: businessProfile.street,
+                building_name: businessProfile.buildingName,
+                building_no: businessProfile.buildingNo,
+                floor_no: businessProfile.floorNo,
+                shop_no: businessProfile.shopNo,
+                latitude: businessProfile.latitude,
+                longitude: businessProfile.longitude,
+              }
+            } : null,
+          }
+        })
+      )
+
+      const serializedReq = serializeRequest(serviceRequest)
+
       return ApiResponse.success(
         response,
         {
-          request: serializeRequest(serviceRequest),
+          request: {
+            request_no: serviceRequest.requestNo,
+            status: serviceRequest.status,
+            submitted: serviceRequest.createdAt?.toISO() ?? null,
+            title: serviceRequest.title,
+            category: serviceRequest.category ? (user.language === 'ar' ? serviceRequest.category.nameAr : serviceRequest.category.nameEn) : null,
+            spare_part_type: serviceRequest.sparePartType,
+            no_of_tyres: serviceRequest.noOfTyres,
+            vehicle: serviceRequest.userVehicle ? {
+              brand: serviceRequest.userVehicle.carBrand?.name || null,
+              model: serviceRequest.userVehicle.carModel?.name || null,
+              year: serviceRequest.userVehicle.year || null,
+            } : null,
+            description: serviceRequest.description,
+            when_needed: serviceRequest.whenNeeded,
+            scheduled_date: serviceRequest.scheduledDate?.toISODate() ?? null,
+            scheduled_time: serviceRequest.scheduledTime,
+            pickup_location_name: serviceRequest.pickupLocationName,
+            pickup_latitude: serviceRequest.pickupLatitude,
+            pickup_longitude: serviceRequest.pickupLongitude,
+            delivery_location_name: serviceRequest.deliveryLocationName,
+            delivery_latitude: serviceRequest.deliveryLatitude,
+            delivery_longitude: serviceRequest.deliveryLongitude,
+            photos: serializedReq.attachments?.map((a) => a.file_url) || [],
+            voice_note_url: serializedReq.voice_note_url,
+            responses,
+          },
           chat_id: chatId!,
           message: 'Offer accepted',
         },
