@@ -21,6 +21,7 @@ import {
   serializeOrderAdditionalWork,
   serializeUserOrder,
   serializeUserOrderList,
+  getBusinessRatingsMap,
 } from '#helpers/request_helper'
 import {
   createOrderValidator,
@@ -201,8 +202,11 @@ export default class OrderController {
         .preload('additionalWorks')
         .paginate(page, limit)
 
+      const businessUserIds = paginated.all().map((order) => order.businessUserId)
+      const ratingsMap = await getBusinessRatingsMap(businessUserIds)
+
       const data = await Promise.all(
-        paginated.all().map((order) => serializeUserOrderList(order, user.language))
+        paginated.all().map((order) => serializeUserOrderList(order, user.language, ratingsMap))
       )
 
       // Fetch all active categories

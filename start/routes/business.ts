@@ -1,15 +1,31 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+import {
+  loginLimiter,
+  otpLimiter,
+  passwordResetLimiter,
+  tokenRefreshLimiter,
+} from '#start/limiter'
 
 router
   .group(() => {
     router
       .group(() => {
-        router.post('/login', '#controllers/business/auth_controller.login')
-        router.post('/forgot-password', '#controllers/business/auth_controller.forgotPassword')
-        router.post('/verify-otp', '#controllers/business/auth_controller.verifyOtp')
-        router.post('/reset-password', '#controllers/business/auth_controller.resetPassword')
-        router.post('/refresh-token', '#controllers/business/auth_controller.refreshToken')
+        router
+          .post('/login', '#controllers/business/auth_controller.login')
+          .use(loginLimiter)
+        router
+          .post('/forgot-password', '#controllers/business/auth_controller.forgotPassword')
+          .use(passwordResetLimiter)
+        router
+          .post('/verify-otp', '#controllers/business/auth_controller.verifyOtp')
+          .use(otpLimiter)
+        router
+          .post('/reset-password', '#controllers/business/auth_controller.resetPassword')
+          .use(passwordResetLimiter)
+        router
+          .post('/refresh-token', '#controllers/business/auth_controller.refreshToken')
+          .use(tokenRefreshLimiter)
         router
           .post('/logout', '#controllers/business/auth_controller.logout')
           .use([middleware.auth(), middleware.role({ role: 'business' })])

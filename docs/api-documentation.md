@@ -37,7 +37,7 @@ Common errors:
 | `401` | Missing/invalid token, wrong role, invalid credentials, invalid OTP/token |
 | `404` | Requested resource does not exist or is not owned by the authenticated account |
 | `422` | Validation failed or workflow rule failed |
-| `429` | Password reset OTP requested too frequently |
+| `429` | Rate limit exceeded (OTP spamming, login brute-force, etc.) |
 | `500` | Unexpected server error |
 
 ### Auth Headers
@@ -203,6 +203,24 @@ File uploads are sent as `multipart/form-data`.
 
 Uploaded file URLs are returned as `/uploads/<stored_path>`.
 
+# Utility APIs
+
+### Health Check
+
+`GET {BASE_URL}/health`
+
+Description: Verifies that the server is online and returns server uptime.
+
+Auth: Public.
+
+Response:
+```json
+{
+  "status": "ok",
+  "uptime": 12.34
+}
+```
+
 # USER APP APIs
 
 The User App flow starts with account creation or guest login, then profile, vehicle, and address setup. The user creates a service/spare-parts request, reviews business offers, accepts one, places an order, tracks status, handles additional work, chats with the selected business, receives notifications, and can rate delivered orders.
@@ -226,6 +244,7 @@ Body:
 | `phone_code` | string | yes | |
 | `phone_number` | string | yes | |
 | `password` | string | yes | min 8 |
+| `language` | string | no | optional (`"en"` or `"ar"`) |
 
 Response: `data.user`, `data.access_token`, `data.refresh_token`.
 

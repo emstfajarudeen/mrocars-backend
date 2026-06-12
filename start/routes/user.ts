@@ -1,17 +1,38 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+import {
+  loginLimiter,
+  registerLimiter,
+  otpLimiter,
+  passwordResetLimiter,
+  tokenRefreshLimiter,
+} from '#start/limiter'
 
 router
   .group(() => {
     router
       .group(() => {
-        router.post('/register', '#controllers/user/auth_controller.register')
-        router.post('/login', '#controllers/user/auth_controller.login')
-        router.post('/guest-login', '#controllers/user/auth_controller.guestLogin')
-        router.post('/forgot-password', '#controllers/user/auth_controller.forgotPassword')
-        router.post('/verify-otp', '#controllers/user/auth_controller.verifyOtp')
-        router.post('/reset-password', '#controllers/user/auth_controller.resetPassword')
-        router.post('/refresh-token', '#controllers/user/auth_controller.refreshToken')
+        router
+          .post('/register', '#controllers/user/auth_controller.register')
+          .use(registerLimiter)
+        router
+          .post('/login', '#controllers/user/auth_controller.login')
+          .use(loginLimiter)
+        router
+          .post('/guest-login', '#controllers/user/auth_controller.guestLogin')
+          .use(loginLimiter)
+        router
+          .post('/forgot-password', '#controllers/user/auth_controller.forgotPassword')
+          .use(passwordResetLimiter)
+        router
+          .post('/verify-otp', '#controllers/user/auth_controller.verifyOtp')
+          .use(otpLimiter)
+        router
+          .post('/reset-password', '#controllers/user/auth_controller.resetPassword')
+          .use(passwordResetLimiter)
+        router
+          .post('/refresh-token', '#controllers/user/auth_controller.refreshToken')
+          .use(tokenRefreshLimiter)
         router
           .post('/logout', '#controllers/user/auth_controller.logout')
           .use([middleware.auth(), middleware.role({ role: 'user' })])

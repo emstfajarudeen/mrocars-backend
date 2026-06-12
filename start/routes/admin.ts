@@ -1,11 +1,14 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+import { loginLimiter } from '#start/limiter'
 
 router
   .group(() => {
     router
       .group(() => {
-        router.post('/login', '#controllers/admin/auth_controller.login')
+        router
+          .post('/login', '#controllers/admin/auth_controller.login')
+          .use(loginLimiter)
         router
           .post('/logout', '#controllers/admin/auth_controller.logout')
           .use([middleware.auth({ guards: ['web', 'jwt'] }), middleware.role({ role: 'admin' })])

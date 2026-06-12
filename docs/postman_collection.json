@@ -13,6 +13,39 @@
   ],
   "item": [
     {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "description": "Verifies that the server is online and returns server uptime."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "Admin",
       "description": "Admin panel API endpoints. All routes (except login) require admin auth + role.",
       "item": [
@@ -4679,9 +4712,9 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Ahmed Al-Salem\",\n  \"email\": \"ahmed@example.com\",\n  \"phone_code\": \"+965\",\n  \"phone_number\": \"55567890\",\n  \"password\": \"password123\"\n}"
+                  "raw": "{\n  \"name\": \"Ahmed Al-Salem\",\n  \"email\": \"ahmed@example.com\",\n  \"phone_code\": \"+965\",\n  \"phone_number\": \"55567890\",\n  \"password\": \"password123\",\n  \"language\": \"en\"\n}"
                 },
-                "description": "Registers a new user account and returns JWT tokens. Note: password_confirmation and language fields have been removed from the validator."
+                "description": "Registers a new user account and returns JWT tokens. Note: password_confirmation has been removed from the validator, and language is optional ('en' or 'ar')."
               },
               "event": [
                 {

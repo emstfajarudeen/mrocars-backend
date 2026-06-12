@@ -7,7 +7,7 @@ const driveConfig = defineConfig({
   default: env.get('DRIVE_DISK'),
   services: {
     local: services.fs({
-      location: app.makePath('storage'),
+      location: env.get('UPLOAD_DIR') || app.makePath('storage'),
       serveFiles: true,
       routeBasePath: '/uploads',
       visibility: 'public',

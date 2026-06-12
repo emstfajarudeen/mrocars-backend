@@ -20,7 +20,7 @@ import {
   isGuestUser,
   resolveCategoryId,
   serializeRequest,
-  getBusinessRating,
+  getBusinessRatingsMap,
 } from '#helpers/request_helper'
 import { storeFile, validateFile, publicUrl } from '#helpers/upload'
 import { createRequestValidator } from '#validators/user/request_validator'
@@ -301,9 +301,12 @@ export default class RequestController {
         return ApiResponse.error(response, 'Request not found', undefined, 404)
       }
 
+      const businessUserIds = serviceRequest.responses.map((item) => item.businessUserId)
+      const ratingsMap = await getBusinessRatingsMap(businessUserIds)
+
       const responses = await Promise.all(
         serviceRequest.responses.map(async (item) => {
-          const rating = await getBusinessRating(item.businessUserId)
+          const rating = ratingsMap.get(item.businessUserId) || { rating_avg: null }
           const businessProfile = item.businessUser?.businessProfile
           return {
             response_id: item.id,
@@ -590,9 +593,12 @@ export default class RequestController {
         }
       )
 
+      const businessUserIds = serviceRequest.responses.map((item) => item.businessUserId)
+      const ratingsMap = await getBusinessRatingsMap(businessUserIds)
+
       const responses = await Promise.all(
         serviceRequest.responses.map(async (item) => {
-          const rating = await getBusinessRating(item.businessUserId)
+          const rating = ratingsMap.get(item.businessUserId) || { rating_avg: null }
           const businessProfile = item.businessUser?.businessProfile
           return {
             response_id: item.id,

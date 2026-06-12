@@ -106,6 +106,33 @@ export async function getBusinessRating(businessUserId: number) {
   }
 }
 
+export async function getBusinessRatingsMap(businessUserIds: number[]) {
+  if (businessUserIds.length === 0) {
+    return new Map<number, { rating_avg: number | null, ratingAvg: number | null, total_reviews: number, totalReviews: number }>()
+  }
+
+  const rows = await OrderRating.query()
+    .whereIn('businessUserId', businessUserIds)
+    .groupBy('businessUserId')
+    .select('businessUserId')
+    .avg('rating as avg')
+    .count('* as total')
+
+  const ratingsMap = new Map<number, { rating_avg: number | null, ratingAvg: number | null, total_reviews: number, totalReviews: number }>()
+  for (const row of rows) {
+    const avg = row.$extras.avg
+    const total = Number(row.$extras.total)
+    ratingsMap.set(row.businessUserId, {
+      rating_avg: avg !== null ? Math.round(Number(avg) * 10) / 10 : null,
+      ratingAvg: avg !== null ? Math.round(Number(avg) * 10) / 10 : null,
+      total_reviews: total,
+      totalReviews: total,
+    })
+  }
+
+  return ratingsMap
+}
+
 export function serializeUserBrief(user: User) {
   return {
     id: user.id,
@@ -500,8 +527,12 @@ export async function serializeUserOrder(order: Order, language: UserLanguage = 
   }
 }
 
-export async function serializeUserOrderList(order: Order, language: UserLanguage = 'en') {
-  const rating = await getBusinessRating(order.businessUserId)
+export async function serializeUserOrderList(
+  order: Order,
+  language: UserLanguage = 'en',
+  ratingsMap?: Map<number, { rating_avg: number | null; total_reviews: number }>
+) {
+  const rating = ratingsMap?.get(order.businessUserId) ?? await getBusinessRating(order.businessUserId)
 
   const businessProfile = order.businessUser?.businessProfile
     ? {

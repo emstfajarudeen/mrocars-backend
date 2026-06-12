@@ -15,3 +15,7 @@ import '#start/routes/admin'
 import '#start/routes/admin_web'
 
 router.get('/', ({ response }) => response.redirect('/admin'))
+
+router.get('/health', async ({ response }) => {
+  return response.ok({ status: 'ok', uptime: process.uptime() })
+})

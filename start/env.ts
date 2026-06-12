@@ -37,4 +37,6 @@ export default await Env.create(new URL('../', import.meta.url), {
   DRIVE_DISK: Env.schema.enum(['local'] as const),
   FRONTEND_URL: Env.schema.string.optional(),
   JWT_SECRET: Env.schema.string(),
+  LIMITER_STORE: Env.schema.enum.optional(['memory', 'redis'] as const),
+  UPLOAD_DIR: Env.schema.string.optional(),
 })
