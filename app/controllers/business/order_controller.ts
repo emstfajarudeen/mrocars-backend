@@ -15,7 +15,7 @@ import {
   serializeUserWithPhone,
   resolveCategoryId,
 } from '#helpers/request_helper'
-import { deleteFileIfExists, storeFile, validateFile } from '#helpers/upload'
+import { deleteFileIfExists, storeFile, validateFile, publicUrl } from '#helpers/upload'
 import {
   createAdditionalWorkValidator,
   updateAdditionalWorkValidator,
@@ -60,9 +60,79 @@ function businessOrderDetailQuery() {
 }
 
 function serializeBusinessOrderDetail(order: Order, language: UserLanguage = 'en') {
-  const serialized = serializeOrder(order, { includeTimeline: true, language })
-  serialized.user = order.user ? serializeUserWithPhone(order.user) : null
-  return serialized
+  const user = order.user
+    ? {
+        name: order.user.name,
+        avatar: order.user.avatar ? publicUrl(order.user.avatar) : null,
+      }
+    : null
+
+  const category = order.request?.category
+    ? (language === 'ar' ? order.request.category.nameAr : order.request.category.nameEn)
+    : null
+
+  const vehicle = order.request?.userVehicle
+    ? {
+        id: order.request.userVehicle.id,
+        brand: order.request.userVehicle.carBrand?.name || null,
+        model: order.request.userVehicle.carModel?.name || null,
+        year: order.request.userVehicle.year || null,
+      }
+    : null
+
+  const attachments = (order.request?.attachments || []).map((att: any) => publicUrl(att.filePath)).filter(Boolean)
+  const voiceNoteUrl = order.request?.voiceNote ? publicUrl(order.request.voiceNote) : null
+
+  const request = order.request
+    ? {
+        category,
+        vehicle,
+        no_of_tyres: order.request.noOfTyres,
+        when_needed: order.request.whenNeeded,
+        pickup_location_name: order.request.pickupLocationName,
+        pickup_latitude: order.request.pickupLatitude,
+        pickup_longitude: order.request.pickupLongitude,
+        delivery_location_name: order.request.deliveryLocationName,
+        delivery_latitude: order.request.deliveryLatitude,
+        delivery_longitude: order.request.deliveryLongitude,
+        description: order.request.description,
+        voice_note_url: voiceNoteUrl,
+        attachments,
+      }
+    : null
+
+  const address = order.deliveryAddress as any
+  const deliveryAddress = address
+    ? {
+        governorate: address.governorate
+          ? (language === 'ar' ? address.governorate.nameAr : address.governorate.nameEn)
+          : null,
+        area: address.area
+          ? (language === 'ar' ? address.area.nameAr : address.area.nameEn)
+          : null,
+        block: address.block,
+        street: address.street,
+        building_name: address.buildingName,
+        building_no: address.buildingNo,
+        floor_no: address.floorNo,
+        shop_no: address.shopNo,
+        latitude: address.latitude ? Number(address.latitude) : null,
+        longitude: address.longitude ? Number(address.longitude) : null,
+        phone_code: address.recipientPhoneCode,
+        phone_number: address.recipientPhoneNumber,
+      }
+    : null
+
+  return {
+    order_no: order.orderNo,
+    created_at: order.createdAt?.toISO() ?? null,
+    user,
+    request,
+    delivery_address: deliveryAddress,
+    parts_price: order.partsPrice,
+    payment_status: order.paymentStatus,
+    status: order.status,
+  }
 }
 
 export default class OrderController {
@@ -176,8 +246,8 @@ export default class OrderController {
       return ApiResponse.success(
         response,
         {
-          order: serializeOrder(order, { includeTimeline: true, language: business.language }),
-          message: 'Order status updated',
+          order_id: order.id,
+          request_id: order.requestId,
         },
         'Order status updated'
       )
@@ -212,15 +282,12 @@ export default class OrderController {
         return ApiResponse.error(response, 'Validation failed', voiceErrors, 422)
       }
 
-      const attachmentFile = request.file('attachment', ATTACHMENT_OPTIONS)
-      const attachmentErrors = validateFile(
-        attachmentFile,
-        'attachment',
-        ATTACHMENT_OPTIONS,
-        false
-      )
-      if (attachmentErrors) {
-        return ApiResponse.error(response, 'Validation failed', attachmentErrors, 422)
+      const attachmentFiles = request.files('attachments', ATTACHMENT_OPTIONS)
+      for (const [index, file] of attachmentFiles.entries()) {
+        const fileErrors = validateFile(file, `attachments[${index}]`, ATTACHMENT_OPTIONS, false)
+        if (fileErrors) {
+          return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+        }
       }
 
       const work = await OrderAdditionalWork.create({
@@ -228,7 +295,7 @@ export default class OrderController {
         notes: payload.notes ?? null,
         voiceNote: null,
         price: String(payload.price),
-        attachment: null,
+        attachments: [],
         status: 'pending',
         paymentStatus: 'unpaid',
       })
@@ -240,14 +307,14 @@ export default class OrderController {
         )
       }
 
-      if (attachmentFile) {
-        work.attachment = await storeFile(
-          attachmentFile,
-          `additional-works/attachments/${order.id}`
+      if (attachmentFiles.length > 0) {
+        const stored = await Promise.all(
+          attachmentFiles.map((file) => storeFile(file, `additional-works/attachments/${order.id}`))
         )
+        work.attachments = stored
       }
 
-      if (voiceNoteFile || attachmentFile) {
+      if (voiceNoteFile || attachmentFiles.length > 0) {
         await work.save()
       }
 
@@ -273,8 +340,8 @@ export default class OrderController {
       return ApiResponse.success(
         response,
         {
-          additional_work: serializeOrderAdditionalWork(work),
-          message: 'Additional work sent',
+          additional_work_id: work.id,
+          order_id: order.id,
         },
         'Additional work sent',
         201
@@ -338,15 +405,12 @@ export default class OrderController {
         return ApiResponse.error(response, 'Validation failed', voiceErrors, 422)
       }
 
-      const attachmentFile = request.file('attachment', ATTACHMENT_OPTIONS)
-      const attachmentErrors = validateFile(
-        attachmentFile,
-        'attachment',
-        ATTACHMENT_OPTIONS,
-        false
-      )
-      if (attachmentErrors) {
-        return ApiResponse.error(response, 'Validation failed', attachmentErrors, 422)
+      const attachmentFiles = request.files('attachments', ATTACHMENT_OPTIONS)
+      for (const [index, file] of attachmentFiles.entries()) {
+        const fileErrors = validateFile(file, `attachments[${index}]`, ATTACHMENT_OPTIONS, false)
+        if (fileErrors) {
+          return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+        }
       }
 
       if (voiceNoteFile) {
@@ -354,12 +418,14 @@ export default class OrderController {
         work.voiceNote = await storeFile(voiceNoteFile, `additional-works/voice-notes/${order.id}`)
       }
 
-      if (attachmentFile) {
-        await deleteFileIfExists(work.attachment)
-        work.attachment = await storeFile(
-          attachmentFile,
-          `additional-works/attachments/${order.id}`
+      if (attachmentFiles.length > 0) {
+        if (work.attachments && work.attachments.length > 0) {
+          await Promise.all(work.attachments.map((file) => deleteFileIfExists(file)))
+        }
+        const stored = await Promise.all(
+          attachmentFiles.map((file) => storeFile(file, `additional-works/attachments/${order.id}`))
         )
+        work.attachments = stored
       }
 
       await work.save()
@@ -367,8 +433,8 @@ export default class OrderController {
       return ApiResponse.success(
         response,
         {
-          additional_work: serializeOrderAdditionalWork(work),
-          message: 'Updated successfully',
+          additional_work_id: work.id,
+          order_id: order.id,
         },
         'Updated successfully'
       )

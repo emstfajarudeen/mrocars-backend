@@ -351,10 +351,11 @@ export function serializeBusinessProfileForOrder(
 }
 
 export function serializeOrderAdditionalWork(work: OrderAdditionalWork) {
+  const attachments = work.attachments || []
   return {
     ...work.serialize(),
     voice_note_url: publicUrl(work.voiceNote),
-    attachment_url: publicUrl(work.attachment),
+    attachments: attachments.map((p) => publicUrl(p)).filter(Boolean),
   }
 }
 
@@ -470,6 +471,15 @@ export async function serializeUserOrder(order: Order, language: UserLanguage = 
         title: order.request.title,
         no_of_tyres: order.request.noOfTyres,
         status: order.request.status,
+        when_needed: order.request.whenNeeded,
+        scheduled_date: order.request.scheduledDate?.toISODate() ?? null,
+        scheduled_time: order.request.scheduledTime,
+        pickup_location_name: order.request.pickupLocationName,
+        pickup_latitude: order.request.pickupLatitude,
+        pickup_longitude: order.request.pickupLongitude,
+        delivery_location_name: order.request.deliveryLocationName,
+        delivery_latitude: order.request.deliveryLatitude,
+        delivery_longitude: order.request.deliveryLongitude,
       }
     : null
 
@@ -486,6 +496,7 @@ export async function serializeUserOrder(order: Order, language: UserLanguage = 
     service_fee: order.platformFee,
     delivery_fee: order.deliveryFee,
     additional_work_count: order.additionalWorks ? order.additionalWorks.length : 0,
+    order_rating: order.rating?.serialize() ?? null,
   }
 }
 
