@@ -20,7 +20,10 @@ export default function Login() {
   return (
     <>
       <Head title="Login" />
-      <div className="flex min-h-screen items-center justify-center bg-bg-primary p-4">
+      <div className="flex min-h-screen items-center justify-center bg-bg-primary p-4 flex-col">
+        <div className="mb-8 flex justify-center">
+          <img src="/logo.svg" alt="MROCars Logo" className="h-12 w-auto" />
+        </div>
         <Card className="w-full max-w-md" title="MROCars Admin">
           <p className="mb-6 text-sm text-text-secondary">Sign in to manage the platform</p>
           {(flash.error || errors.email) && (

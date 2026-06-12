@@ -81,12 +81,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border px-6 py-5">
-        <Link href="/admin/dashboard" className="flex items-center gap-2" onClick={onNavigate}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm font-bold text-white">
-            M
-          </div>
-          <span className="text-lg font-semibold tracking-tight">MROCars</span>
+      <div className="px-6 py-5">
+        <Link href="/admin/dashboard" className="flex items-center" onClick={onNavigate}>
+          <img src="/logo.svg" alt="MROCars Logo" className="h-14 w-auto" />
         </Link>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4">
