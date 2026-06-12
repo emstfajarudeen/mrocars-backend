@@ -309,7 +309,7 @@ export default class RequestController {
             response_id: item.id,
             price: item.price,
             description: item.notes,
-            attachment_urls: (item.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
+            attachments: (item.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
             offer_validity_type: item.offerValidityType,
             offer_valid_until: item.offerValidUntil?.toISO() ?? item.offerValidUntil ?? null,
             business: businessProfile ? {
@@ -411,80 +411,12 @@ export default class RequestController {
     }
   }
 
-  async responses({ auth, request, params, response }: HttpContext) {
+  async responses(ctx: HttpContext) {
     try {
-      const user = auth.getUserOrFail()
-      const serviceRequest = await findOwnedRequest(user.id, Number(params.requestId))
-
-      if (!serviceRequest) {
-        return ApiResponse.error(response, 'Request not found', undefined, 404)
-      }
-
-      const governorateId = request.input('governorate_id')
-      const areaId = request.input('area_id')
-
-      const responsesQuery = applyRealOffersFilter(
-        RequestResponse.query().where('requestId', serviceRequest.id)
-      )
-        .orderBy('createdAt', 'asc')
-        .preload('businessUser', (businessQuery) => {
-          businessQuery.preload('businessProfile', (profileQuery) => {
-            profileQuery.preload('governorate').preload('area')
-          })
-        })
-
-      if (governorateId || areaId) {
-        responsesQuery.whereExists((query) => {
-          query
-            .from('business_profiles')
-            .whereRaw('business_profiles.user_id = request_responses.business_user_id')
-          if (governorateId) {
-            query.where('business_profiles.governorate_id', governorateId)
-          }
-          if (areaId) {
-            query.where('business_profiles.area_id', areaId)
-          }
-        })
-      }
-
-      const items = await responsesQuery
-
-      const data = await Promise.all(
-        items.map(async (item) => {
-          const rating = await getBusinessRating(item.businessUserId)
-          const businessProfile = item.businessUser?.businessProfile
-          return {
-            response_id: item.id,
-            price: item.price,
-            description: item.notes,
-            attachment_urls: (item.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
-            offer_validity_type: item.offerValidityType,
-            offer_valid_until: item.offerValidUntil?.toISO() ?? item.offerValidUntil ?? null,
-            business: businessProfile ? {
-              id: item.businessUserId,
-              name: businessProfile.businessName,
-              avatar: businessProfile.avatar ? publicUrl(businessProfile.avatar) : null,
-              rating: rating.rating_avg,
-              address: {
-                governorate: businessProfile.governorate ? (user.language === 'ar' ? businessProfile.governorate.nameAr : businessProfile.governorate.nameEn) : null,
-                area: businessProfile.area ? (user.language === 'ar' ? businessProfile.area.nameAr : businessProfile.area.nameEn) : null,
-                block: businessProfile.block,
-                street: businessProfile.street,
-                building_name: businessProfile.buildingName,
-                building_no: businessProfile.buildingNo,
-                floor_no: businessProfile.floorNo,
-                shop_no: businessProfile.shopNo,
-                latitude: businessProfile.latitude,
-                longitude: businessProfile.longitude,
-              },
-            } : null,
-          }
-        })
-      )
-
-      return ApiResponse.success(response, { responses: data })
+      ctx.params.id = ctx.params.requestId
+      return this.show(ctx)
     } catch {
-      return ApiResponse.error(response, 'Unauthorized', undefined, 401)
+      return ApiResponse.error(ctx.response, 'Unauthorized', undefined, 401)
     }
   }
 
@@ -519,7 +451,7 @@ export default class RequestController {
           request_id: requestResponse.requestId,
           price: requestResponse.price,
           description: requestResponse.notes,
-          attachment_urls: (requestResponse.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
+          attachments: (requestResponse.attachments ?? []).map((p) => publicUrl(p)).filter(Boolean),
           business: businessProfile ? {
             id: requestResponse.businessUserId,
             name: businessProfile.businessName,
@@ -555,10 +487,10 @@ export default class RequestController {
         return ApiResponse.error(response, 'Request not found', undefined, 404)
       }
 
-      if (serviceRequest.status !== 'confirmed') {
+      if (serviceRequest.status !== 'new') {
         return ApiResponse.error(
           response,
-          'Request must be confirmed before accepting an offer',
+          'Request must be new before accepting an offer',
           undefined,
           422
         )

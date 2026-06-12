@@ -264,11 +264,6 @@ export default class RequestController {
           created.useTransaction(trx)
           await created.save()
         }
-
-        serviceRequest.status = 'confirmed'
-        serviceRequest.useTransaction(trx)
-        await serviceRequest.save()
-
         return created
       })
 
