@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import type { HttpContext } from '@adonisjs/core/http'
 import hash from '@adonisjs/core/services/hash'
 import User from '#models/user'
@@ -81,27 +80,6 @@ export default class AuthController {
     }
   }
 
-  async guestLogin({ response, auth }: HttpContext) {
-    try {
-      const user = await User.create({
-        name: 'Guest',
-        email: `guest_${randomUUID()}@guest.com`,
-        password: null,
-        role: 'user',
-        language: 'en',
-        isActive: true,
-      })
-
-      const tokens = await AuthService.generateTokens(user, auth)
-      return ApiResponse.success(
-        response,
-        { user: user.serialize(), ...tokens },
-        'Guest logged in successfully'
-      )
-    } catch {
-      return ApiResponse.error(response, 'Something went wrong', undefined, 500)
-    }
-  }
 
   async forgotPassword({ request, response }: HttpContext) {
     try {

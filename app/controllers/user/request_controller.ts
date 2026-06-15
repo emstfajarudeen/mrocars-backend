@@ -17,7 +17,6 @@ import {
   applyRealOffersFilter,
   findOwnedRequest,
   generateRequestNo,
-  isGuestUser,
   resolveCategoryId,
   serializeRequest,
   getBusinessRatingsMap,
@@ -61,14 +60,6 @@ export default class RequestController {
   async store({ auth, request, response }: HttpContext) {
     try {
       const user = auth.getUserOrFail()
-
-      if (await isGuestUser(user.id)) {
-        return response.status(401).json({
-          success: false,
-          message: 'Please login to submit a request',
-          require_login: true,
-        })
-      }
 
       const payload = await request.validateUsing(createRequestValidator)
       const scheduleErrors = winchScheduleErrors(payload)

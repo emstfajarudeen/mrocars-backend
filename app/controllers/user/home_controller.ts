@@ -4,7 +4,6 @@ import Category from '#models/category'
 import ChatMessage from '#models/chat_message'
 import Order from '#models/order'
 import Request from '#models/request'
-import User from '#models/user'
 import UserVehicle from '#models/user_vehicle'
 import { ApiResponse } from '#helpers/response'
 import {
@@ -29,46 +28,78 @@ async function getUnreadChatMessagesCount(userId: number) {
 export default class HomeController {
   async index({ auth, response }: HttpContext) {
     try {
-      const user = auth.getUserOrFail() as User
+      const isAuthenticated = await auth.use('jwt').check()
+      const user = isAuthenticated ? auth.use('jwt').user : null
 
-      const [
-        banners,
-        defaultVehicle,
-        categories,
-        requestsCount,
-        ordersCount,
-        unreadChatsCount,
-        unreadNotificationsCount,
-      ] = await Promise.all([
-        Banner.query().where('isActive', true).orderBy('sortOrder', 'asc'),
-        UserVehicle.query()
-          .where('userId', user.id)
-          .where('isDefault', true)
-          .preload('carBrand')
-          .preload('carModel')
-          .first(),
-        Category.query().where('isActive', true).orderBy('sortOrder', 'asc'),
-        Request.query().where('userId', user.id).where('status', 'new').count('* as total'),
-        Order.query().where('userId', user.id).where('status', 'new').count('* as total'),
-        getUnreadChatMessagesCount(user.id),
-        NotificationService.getUnreadCount(user.id),
-      ])
+      const bannersQuery = Banner.query().where('isActive', true).orderBy('sortOrder', 'asc')
+      const categoriesQuery = Category.query().where('isActive', true).orderBy('sortOrder', 'asc')
+
+      let banners
+      let categories
+      let defaultVehicle = null
+      let requestsCount = 0
+      let ordersCount = 0
+      let unreadChatsCount = 0
+      let unreadNotificationsCount = 0
+
+      if (user) {
+        const [
+          fetchedBanners,
+          fetchedDefaultVehicle,
+          fetchedCategories,
+          fetchedRequestsCount,
+          fetchedOrdersCount,
+          fetchedUnreadChatsCount,
+          fetchedUnreadNotificationsCount,
+        ] = await Promise.all([
+          bannersQuery,
+          UserVehicle.query()
+            .where('userId', user.id)
+            .where('isDefault', true)
+            .preload('carBrand')
+            .preload('carModel')
+            .first(),
+          categoriesQuery,
+          Request.query().where('userId', user.id).where('status', 'new').count('* as total'),
+          Order.query().where('userId', user.id).where('status', 'new').count('* as total'),
+          getUnreadChatMessagesCount(user.id),
+          NotificationService.getUnreadCount(user.id),
+        ])
+
+        banners = fetchedBanners
+        defaultVehicle = fetchedDefaultVehicle
+        categories = fetchedCategories
+        requestsCount = Number(fetchedRequestsCount[0].$extras.total || 0)
+        ordersCount = Number(fetchedOrdersCount[0].$extras.total || 0)
+        unreadChatsCount = fetchedUnreadChatsCount
+        unreadNotificationsCount = fetchedUnreadNotificationsCount
+      } else {
+        const [fetchedBanners, fetchedCategories] = await Promise.all([
+          bannersQuery,
+          categoriesQuery,
+        ])
+        banners = fetchedBanners
+        categories = fetchedCategories
+      }
+
+      const language = user?.language || 'en'
 
       return ApiResponse.success(response, {
-        banners: banners.map((banner) => serializeLocalizedBanner(banner, user.language)),
+        banners: banners.map((banner) => serializeLocalizedBanner(banner, language)),
         default_vehicle: serializeUserVehicle(defaultVehicle),
         categories: categories.map((category) =>
-          serializeLocalizedCategory(category, user.language)
+          serializeLocalizedCategory(category, language)
         ),
         counts: {
-          new_requests_count: Number(requestsCount[0].$extras.total),
-          new_orders_count: Number(ordersCount[0].$extras.total),
+          new_requests_count: requestsCount,
+          new_orders_count: ordersCount,
           unread_chats_count: unreadChatsCount,
           unread_notifications_count: unreadNotificationsCount,
         },
       })
-    } catch {
-      return ApiResponse.error(response, 'Unauthorized', undefined, 401)
+    } catch (error) {
+      console.error('Home controller error:', error)
+      return ApiResponse.error(response, 'Something went wrong', undefined, 500)
     }
   }
 }

@@ -19,9 +19,6 @@ router
           .post('/login', '#controllers/user/auth_controller.login')
           .use(loginLimiter)
         router
-          .post('/guest-login', '#controllers/user/auth_controller.guestLogin')
-          .use(loginLimiter)
-        router
           .post('/forgot-password', '#controllers/user/auth_controller.forgotPassword')
           .use(passwordResetLimiter)
         router
@@ -49,10 +46,10 @@ router
       })
       .prefix('/masters')
 
+    router.get('/home', '#controllers/user/home_controller.index')
+
     router
       .group(() => {
-        router.get('/home', '#controllers/user/home_controller.index')
-
         router
           .group(() => {
             router.get('/', '#controllers/user/profile_controller.show')

@@ -79,16 +79,6 @@ export async function resolveCategoryId(
   return match?.id ?? null
 }
 
-export async function isGuestUser(userId: number): Promise<boolean> {
-  const user = await User.query().where('id', userId).select('password', 'email').first()
-  if (!user) {
-    return true
-  }
-  return (
-    user.password === null || (user.email.startsWith('guest_') && user.email.endsWith('@guest.com'))
-  )
-}
-
 export async function getBusinessRating(businessUserId: number) {
   const row = await OrderRating.query()
     .where('businessUserId', businessUserId)
