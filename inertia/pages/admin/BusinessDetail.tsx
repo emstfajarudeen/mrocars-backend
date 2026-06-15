@@ -82,10 +82,6 @@ export default function BusinessDetail({ business, recent_orders, recent_request
               <span>Status</span>
               <Switch checked={business.user.isActive} onChange={async () => { await apiMutate('PUT', `/businesses/${business.user.id}/toggle-status`, {}); reloadPage() }} />
             </label>
-            <label className="flex items-center gap-2 text-sm font-medium">
-              <span>Approval</span>
-              <Switch checked={!!bp?.isApproved} onChange={async () => { await apiMutate('PUT', `/businesses/${business.user.id}/toggle-approval`, {}); reloadPage() }} />
-            </label>
           </div>
         }
       />
@@ -106,7 +102,6 @@ export default function BusinessDetail({ business, recent_orders, recent_request
               {bp?.governorate ? <p>{bp.governorate.nameEn}, {bp.area?.nameEn} — {bp.block}, {bp.street}</p> : null}
               <div className="flex gap-2">
                 <Badge variant={statusToBadge(business.user.isActive ? 'active' : 'inactive')}>{formatStatusLabel(business.user.isActive ? 'active' : 'inactive')}</Badge>
-                <Badge variant={statusToBadge(bp?.isApproved ? 'approved' : 'pending')}>{bp?.isApproved ? 'Approved' : 'Pending Approval'}</Badge>
               </div>
             </div>
           </div>
