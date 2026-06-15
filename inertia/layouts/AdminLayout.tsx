@@ -38,17 +38,6 @@ const navGroups = [
     ],
   },
   {
-    label: 'Catalog',
-    items: [
-      { label: 'Banners', href: '/admin/banners', icon: Images },
-      { label: 'Categories', href: '/admin/categories', icon: Grid },
-      { label: 'Car Brands', href: '/admin/car-brands', icon: Car },
-      { label: 'Car Models', href: '/admin/car-models', icon: Settings },
-      { label: 'Governorates', href: '/admin/governorates', icon: MapPin },
-      { label: 'Areas', href: '/admin/areas', icon: Map },
-    ],
-  },
-  {
     label: 'Users',
     items: [
       { label: 'Users', href: '/admin/users', icon: Users },
@@ -63,6 +52,17 @@ const navGroups = [
       { label: 'Chats', href: '/admin/chats', icon: MessageSquare },
       { label: 'Enquiries', href: '/admin/enquiries', icon: Mail },
       { label: 'Notifications', href: '/admin/notifications', icon: Bell },
+    ],
+  },
+  {
+    label: 'Catalog',
+    items: [
+      { label: 'Banners', href: '/admin/banners', icon: Images },
+      { label: 'Categories', href: '/admin/categories', icon: Grid },
+      { label: 'Car Brands', href: '/admin/car-brands', icon: Car },
+      { label: 'Car Models', href: '/admin/car-models', icon: Settings },
+      { label: 'Governorates', href: '/admin/governorates', icon: MapPin },
+      { label: 'Areas', href: '/admin/areas', icon: Map },
     ],
   },
   {
