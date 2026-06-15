@@ -9,6 +9,24 @@ export const createBusinessValidator = vine.compile(
     password: vine.string().minLength(8),
     business_name: vine.string().trim(),
     is_approved: vine.boolean().optional(),
+
+    // Address Details
+    address_label: vine.string().optional(),
+    governorate_id: vine.number().optional(),
+    area_id: vine.number().optional(),
+    block: vine.string().optional(),
+    street: vine.string().optional(),
+    building_name: vine.string().optional(),
+    building_no: vine.string().optional(),
+    floor_no: vine.string().optional(),
+    shop_no: vine.string().optional(),
+    latitude: vine.number().optional(),
+    longitude: vine.number().optional(),
+
+    // Bank Details
+    bank_name: vine.string().optional(),
+    account_name: vine.string().optional(),
+    iban: vine.string().optional(),
   })
 )
 

@@ -3,6 +3,8 @@ import db from '@adonisjs/lucid/services/db'
 import Order from '#models/order'
 import RequestResponse from '#models/request_response'
 import User from '#models/user'
+import Governorate from '#models/governorate'
+import Area from '#models/area'
 import { buildPaginationMeta, getPaginationParams, serializeCategory } from '#helpers/masters'
 import { parseBooleanQuery } from '#helpers/admin_helper'
 import { getBusinessRating } from '#helpers/request_helper'
@@ -253,6 +255,11 @@ export default class BusinessController {
   }
 
   async create({ inertia }: HttpContext) {
-    return inertia.render('admin/BusinessCreate')
+    const governorates = await Governorate.query().orderBy('nameEn', 'asc')
+    const areas = await Area.query().orderBy('nameEn', 'asc')
+    return inertia.render('admin/BusinessCreate', {
+      governorates: governorates.map((g) => g.serialize()),
+      areas: areas.map((a) => a.serialize()),
+    })
   }
 }

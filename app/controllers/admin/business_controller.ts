@@ -13,7 +13,7 @@ import {
 } from '#helpers/masters'
 import { parseBooleanQuery } from '#helpers/admin_helper'
 import { getBusinessRating } from '#helpers/request_helper'
-import { publicUrl } from '#helpers/upload'
+import { publicUrl, storeFile, validateImageFile } from '#helpers/upload'
 import AuthService from '#services/auth_service'
 import {
   createBusinessValidator,
@@ -218,6 +218,17 @@ export default class BusinessController {
         )
       }
 
+      const avatarFile = request.file('avatar', {
+        size: '2mb',
+        extnames: ['jpg', 'jpeg', 'png', 'webp'],
+      })
+      if (avatarFile) {
+        const fileErrors = validateImageFile(avatarFile, 'avatar')
+        if (fileErrors) {
+          return ApiResponse.error(response, 'Validation failed', fileErrors, 422)
+        }
+      }
+
       const businessUser = await db.transaction(async (trx) => {
         const user = await User.create(
           {
@@ -233,6 +244,11 @@ export default class BusinessController {
           { client: trx }
         )
 
+        let avatarPath = null
+        if (avatarFile) {
+          avatarPath = await storeFile(avatarFile, `business/avatars/${user.id}`)
+        }
+
         await BusinessProfile.create(
           {
             userId: user.id,
@@ -240,7 +256,26 @@ export default class BusinessController {
             email: payload.email,
             phoneCode: payload.phone_code,
             phoneNumber: payload.phone_number,
+            avatar: avatarPath,
             isApproved: payload.is_approved ?? true,
+
+            // Address Details
+            addressLabel: payload.address_label ?? null,
+            governorateId: payload.governorate_id ?? null,
+            areaId: payload.area_id ?? null,
+            block: payload.block ?? null,
+            street: payload.street ?? null,
+            buildingName: payload.building_name ?? null,
+            buildingNo: payload.building_no ?? null,
+            floorNo: payload.floor_no ?? null,
+            shopNo: payload.shop_no ?? null,
+            latitude: payload.latitude !== undefined ? String(payload.latitude) : null,
+            longitude: payload.longitude !== undefined ? String(payload.longitude) : null,
+
+            // Bank Details
+            bankName: payload.bank_name ?? null,
+            accountName: payload.account_name ?? null,
+            iban: payload.iban ?? null,
           },
           { client: trx }
         )
