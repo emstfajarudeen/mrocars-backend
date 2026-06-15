@@ -43,6 +43,11 @@ router
     router.get('/chats/:id', '#controllers/admin/inertia/chat_controller.show')
 
     router.get('/profile', '#controllers/admin/inertia/profile_controller.show')
+
+    router.get('/enquiries', '#controllers/admin/inertia/enquiry_controller.index')
+    router.get('/settings', '#controllers/admin/inertia/setting_controller.index')
+    router.get('/reports', '#controllers/admin/inertia/report_controller.index')
+    router.get('/notifications', '#controllers/admin/inertia/notification_controller.index')
   })
   .prefix('/admin')
   .use(adminAuth)

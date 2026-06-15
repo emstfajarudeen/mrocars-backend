@@ -42,6 +42,9 @@ router
       })
       .prefix('/masters')
 
+    router.post('/contact-us', '#controllers/user/enquiry_controller.storeBusiness')
+    router.get('/settings/:key', '#controllers/user/setting_controller.show')
+
     router
       .get('/home', '#controllers/business/home_controller.index')
       .use([middleware.auth(), middleware.role({ role: 'business' })])

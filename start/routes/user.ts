@@ -47,6 +47,8 @@ router
       .prefix('/masters')
 
     router.get('/home', '#controllers/user/home_controller.index')
+    router.post('/contact-us', '#controllers/user/enquiry_controller.storeUser')
+    router.get('/settings/:key', '#controllers/user/setting_controller.show')
 
     router
       .group(() => {

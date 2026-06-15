@@ -151,6 +151,35 @@ router
       })
       .prefix('/businesses')
       .use([middleware.auth({ guards: ['web', 'jwt'] }), middleware.role({ role: 'admin' })])
+
+    router
+      .group(() => {
+        router.put('/:id/resolve', '#controllers/admin/inertia/enquiry_controller.resolve')
+        router.delete('/:id', '#controllers/admin/inertia/enquiry_controller.destroy')
+      })
+      .prefix('/enquiries')
+      .use([middleware.auth({ guards: ['web', 'jwt'] }), middleware.role({ role: 'admin' })])
+
+    router
+      .group(() => {
+        router.post('/', '#controllers/admin/inertia/setting_controller.store')
+      })
+      .prefix('/settings')
+      .use([middleware.auth({ guards: ['web', 'jwt'] }), middleware.role({ role: 'admin' })])
+
+    router
+      .group(() => {
+        router.get('/export', '#controllers/admin/inertia/report_controller.exportCsv')
+      })
+      .prefix('/reports')
+      .use([middleware.auth({ guards: ['web', 'jwt'] }), middleware.role({ role: 'admin' })])
+
+    router
+      .group(() => {
+        router.post('/send', '#controllers/admin/inertia/notification_controller.send')
+      })
+      .prefix('/notifications')
+      .use([middleware.auth({ guards: ['web', 'jwt'] }), middleware.role({ role: 'admin' })])
   })
   .prefix('/api/v1/admin')
   .use(middleware.forceJsonResponse())

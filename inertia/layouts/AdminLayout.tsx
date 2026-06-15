@@ -16,6 +16,9 @@ import {
   User,
   Users,
   X,
+  BarChart3,
+  Bell,
+  Mail,
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { ToastProvider, useToast } from '~/components/ui/Toast'
@@ -29,7 +32,10 @@ type PageProps = { auth: { user: AuthUser | null }; flash: Flash }
 const navGroups = [
   {
     label: 'Overview',
-    items: [{ label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard }],
+    items: [
+      { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+      { label: 'Reports', href: '/admin/reports', icon: BarChart3 },
+    ],
   },
   {
     label: 'Catalog',
@@ -55,11 +61,16 @@ const navGroups = [
       { label: 'Requests', href: '/admin/requests', icon: FileText },
       { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
       { label: 'Chats', href: '/admin/chats', icon: MessageSquare },
+      { label: 'Enquiries', href: '/admin/enquiries', icon: Mail },
+      { label: 'Notifications', href: '/admin/notifications', icon: Bell },
     ],
   },
   {
     label: 'Account',
-    items: [{ label: 'Profile', href: '/admin/profile', icon: User }],
+    items: [
+      { label: 'Profile', href: '/admin/profile', icon: User },
+      { label: 'Settings', href: '/admin/settings', icon: Settings },
+    ],
   },
 ]
 
