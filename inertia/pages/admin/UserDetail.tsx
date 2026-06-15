@@ -42,8 +42,8 @@ export default function UserDetail({ user }: Props) {
   return (
     <>
       <Head title={user.name} />
-      <Link href={user.is_guest ? "/admin/guests" : "/admin/users"} className="mb-4 inline-flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary">
-        <ArrowLeft className="h-4 w-4" /> Back to {user.is_guest ? "guests" : "users"}
+      <Link href="/admin/users" className="mb-4 inline-flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary">
+        <ArrowLeft className="h-4 w-4" /> Back to users
       </Link>
       <PageHeader
         title={user.name}
@@ -104,16 +104,16 @@ export default function UserDetail({ user }: Props) {
         <Card title="Danger Zone" className="border-red-200">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h4 className="font-medium text-red-600">Delete this {user.is_guest ? 'guest' : 'user'}</h4>
-              <p className="text-sm text-text-secondary">Once you delete a {user.is_guest ? 'guest' : 'user'}, there is no going back. Please be certain.</p>
+              <h4 className="font-medium text-red-600">Delete this user</h4>
+              <p className="text-sm text-text-secondary">Once you delete a user, there is no going back. Please be certain.</p>
             </div>
             <Button variant="danger" onClick={() => setConfirmDelete(true)}>
-              <Trash2 className="h-4 w-4" /> Delete {user.is_guest ? 'Guest' : 'User'}
+              <Trash2 className="h-4 w-4" /> Delete User
             </Button>
           </div>
         </Card>
       </div>
-      <ConfirmDialog open={confirmDelete} onOpenChange={setConfirmDelete} title={user.is_guest ? "Delete guest?" : "Delete user?"} onConfirm={async () => { await apiMutate('DELETE', `/users/${user.id}`, {}); toast.success('Deleted'); window.location.href = user.is_guest ? '/admin/guests' : '/admin/users' }} variant="danger" />
+      <ConfirmDialog open={confirmDelete} onOpenChange={setConfirmDelete} title="Delete user?" onConfirm={async () => { await apiMutate('DELETE', `/users/${user.id}`, {}); toast.success('Deleted'); window.location.href = '/admin/users' }} variant="danger" />
     </>
   )
 }

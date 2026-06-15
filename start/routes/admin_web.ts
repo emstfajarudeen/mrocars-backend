@@ -29,9 +29,6 @@ router
     router.get('/users', '#controllers/admin/inertia/user_controller.index')
     router.get('/users/:id', '#controllers/admin/inertia/user_controller.show')
 
-    router.get('/guests', '#controllers/admin/inertia/guest_controller.index')
-    router.get('/guests/:id', '#controllers/admin/inertia/guest_controller.show')
-
     router.get('/businesses', '#controllers/admin/inertia/business_controller.index')
     router.get('/businesses/create', '#controllers/admin/inertia/business_controller.create')
     router.get('/businesses/:id', '#controllers/admin/inertia/business_controller.show')

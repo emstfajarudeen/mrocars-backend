@@ -136,12 +136,6 @@ router
       .prefix('/users')
       .use([middleware.auth({ guards: ['web', 'jwt'] }), middleware.role({ role: 'admin' })])
 
-    router
-      .group(() => {
-        router.get('/', '#controllers/admin/guest_controller.index')
-      })
-      .prefix('/guests')
-      .use([middleware.auth({ guards: ['web', 'jwt'] }), middleware.role({ role: 'admin' })])
 
     router
       .group(() => {
