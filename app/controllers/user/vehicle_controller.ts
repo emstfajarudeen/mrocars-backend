@@ -105,6 +105,7 @@ export default class VehicleController {
         'Vehicle added successfully'
       )
     } catch (error) {
+      console.log('error:', error)
       if (isValidationError(error)) throw error
       return ApiResponse.error(response, 'Something went wrong', undefined, 500)
     }

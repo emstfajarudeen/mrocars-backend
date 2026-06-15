@@ -22,6 +22,8 @@ type Props = {
     email: string
     phone_code: string | null
     phone_number: string | null
+    phoneCode?: string | null
+    phoneNumber?: string | null
     avatar_url: string | null
     language: string
     is_active: boolean
@@ -65,8 +67,7 @@ export default function UserDetail({ user }: Props) {
             {user.avatar_url ? <img src={user.avatar_url} className="h-16 w-16 rounded-full" alt="" /> : null}
             <div className="space-y-2 text-sm">
               <p>{user.email}</p>
-              <p className="font-mono">{user.phone_code} {user.phone_number}</p>
-              <p>Language: {user.language}</p>
+              <p>Mobile: {(user.phone_code || user.phoneCode) && (user.phone_number || user.phoneNumber) ? `${user.phone_code || user.phoneCode} ${user.phone_number || user.phoneNumber}` : '—'}</p>
               <Badge variant={statusToBadge(user.is_active ? 'active' : 'inactive')}>{formatStatusLabel(user.is_active ? 'active' : 'inactive')}</Badge>
               <p className="text-text-secondary">Joined {formatDate(user.created_at)}</p>
             </div>

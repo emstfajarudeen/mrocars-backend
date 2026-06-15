@@ -198,6 +198,7 @@ export default class RequestController {
         201
       )
     } catch (error) {
+      console.log('error:', error)
       if (isValidationError(error)) throw error
       return ApiResponse.error(response, 'Something went wrong', undefined, 500)
     }

@@ -96,6 +96,8 @@ export default class GuestController {
     return inertia.render('admin/UserDetail', {
       user: {
         ...user.serialize(),
+        phone_code: user.phoneCode,
+        phone_number: user.phoneNumber,
         avatar_url: publicUrl(user.avatar),
         vehicles,
         addresses,
